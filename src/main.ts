@@ -39,7 +39,9 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '../uploads'), { prefix: '/uploads' });
 
   // 设置全局前缀
-  app.setGlobalPrefix(configService.get('application.prefix'));
+  app.setGlobalPrefix(
+    configService.get<string>('application.prefix', { infer: true }),
+  );
 
   // web安全
   app.use(

@@ -1,25 +1,7 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { MenuService } from './menu.service';
-import {
-  RequireLogin,
-  RequirePermissions,
-  UserInfo,
-} from '@/common/decorator/custom.decorator';
-import {
-  ApiBody,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiTags,
-} from '@nestjs/swagger';
+import { RequireLogin, RequirePermissions, UserInfo } from '@/common/decorator/custom.decorator';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from '@/module/menu/dto/update-menu.dto';
 
@@ -49,10 +31,7 @@ export class MenuController {
   @ApiBody({ type: CreateMenuDto, required: true })
   @RequirePermissions('admin:menu:add')
   @Post('/create')
-  async createMenu(
-    @UserInfo('username') username: string,
-    @Body() menuDto: CreateMenuDto,
-  ) {
+  async createMenu(@UserInfo('username') username: string, @Body() menuDto: CreateMenuDto) {
     return await this.menuService.createMenuItem(menuDto, username);
   }
 
@@ -66,10 +45,7 @@ export class MenuController {
   })
   @RequirePermissions('admin:menu:delete')
   @Delete('/delete/:menuId')
-  async deleteMenu(
-    @Param('menuId') menuId: number,
-    @UserInfo('username') username: string,
-  ) {
+  async deleteMenu(@Param('menuId') menuId: number, @UserInfo('username') username: string) {
     return await this.menuService.deleteMenuItem(menuId, username);
   }
 
@@ -93,10 +69,7 @@ export class MenuController {
   @ApiBody({ type: UpdateMenuDto, required: true })
   @RequirePermissions('admin:menu:edit')
   @Post('/update')
-  async updateMenu(
-    @UserInfo('username') username: string,
-    @Body() menuDto: UpdateMenuDto,
-  ) {
+  async updateMenu(@UserInfo('username') username: string, @Body() menuDto: UpdateMenuDto) {
     return await this.menuService.updateMenuItem(menuDto, username);
   }
 

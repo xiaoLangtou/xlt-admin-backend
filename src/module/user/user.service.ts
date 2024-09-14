@@ -1,29 +1,25 @@
 import { User } from '@/module/user/entities/user.entity';
 import { UpdateUserInfoDto } from '@/module/user/dto/update-info.dto';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { In, Repository, SelectQueryBuilder } from 'typeorm';
 import { CreateUserDto } from '@/module/user/dto/create-user.dto';
 import { Result } from '@/common/utils/result';
-import {
-  CREATE_TIME_FORMAT,
-  QUERY_ERROR_CODE,
-  UPDATE_TIME_FORMAT,
-} from '@/common/constant';
+import { CREATE_TIME_FORMAT, QUERY_ERROR_CODE, UPDATE_TIME_FORMAT } from '@/common/constant';
 import { getPagination, md5 } from '@/common/utils/utils';
 import { Dept } from '@/module/dept/entities/dept.entity';
 import { Role } from '@/module/role/entities/role.entity';
 import { Post } from '@/module/post/entities/post.entity';
-import {
-  QueryUserDto,
-  QueryUserWithRolesDto,
-  RemoveUserRoleDto,
-} from '@/module/user/dto/query-user.dto';
+import { QueryUserDto, QueryUserWithRolesDto, RemoveUserRoleDto } from '@/module/user/dto/query-user.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
   @InjectRepository(User)
   private readonly userRepo: Repository<User>;
+
+  @Inject(ConfigService)
+  private configService: ConfigService;
 
   /**
    * 创建用户
@@ -49,13 +45,7 @@ export class UserService {
       return Result.fail(QUERY_ERROR_CODE, '用户不存在');
     }
 
-    return await this.assignCommonUserProperties(
-      user,
-      userDto,
-      username,
-      '修改用户成功',
-      '修改用户失败',
-    );
+    return await this.assignCommonUserProperties(user, userDto, username, '修改用户成功', '修改用户失败');
   }
 
   /**
@@ -107,20 +97,7 @@ export class UserService {
   async getUserById(id: number) {
     const user = await this.userRepo.findOne({
       where: { id, delFlag: '0' },
-      select: [
-        'id',
-        'username',
-        'nickname',
-        'email',
-        'name',
-        'jobNumber',
-        'phoneNumber',
-        'sex',
-        'dept',
-        'roles',
-        'posts',
-        'remark',
-      ],
+      select: ['id', 'username', 'nickname', 'email', 'name', 'jobNumber', 'phoneNumber', 'sex', 'dept', 'roles', 'posts', 'remark'],
       relations: ['dept', 'posts', 'roles'],
     });
     return Result.ok(user);
@@ -151,11 +128,10 @@ export class UserService {
    * @param query
    */
   async getUserList(query: QueryUserDto) {
-    console.log(query);
     const { current = 1, size = 10, ...otherParams } = query;
     const queryBuilder = await this.userRepo.createQueryBuilder('user');
     queryBuilder.innerJoinAndSelect('user.dept', 'dept');
-    queryBuilder.where('user.delFlag = :delFlag', { delFlag: '0' });
+    queryBuilder.where('user.delFlag = :delFlag', { delFlag: '0' }).andWhere('user.username != :username', { username: 'admin' });
 
     queryBuilder.select([
       'user.id as id',
@@ -171,12 +147,9 @@ export class UserService {
       'user.deptId as deptId',
     ]);
     if (otherParams.deptId) {
-      queryBuilder.andWhere(
-        'user.deptId = :deptId and user.deptId is not null ',
-        {
-          deptId: otherParams.deptId,
-        },
-      );
+      queryBuilder.andWhere('user.deptId = :deptId and user.deptId is not null ', {
+        deptId: otherParams.deptId,
+      });
     }
     if (otherParams.username) {
       queryBuilder.andWhere('user.username like :username', {
@@ -222,11 +195,7 @@ export class UserService {
 
       console.log(pager);
 
-      const list = await queryBuilder
-        .offset(pager.startRow)
-        .limit(pager.pageInfo.pageSize)
-        .orderBy('user.create_time', 'DESC')
-        .getRawMany();
+      const list = await queryBuilder.offset(pager.startRow).limit(pager.pageInfo.pageSize).orderBy('user.create_time', 'DESC').getRawMany();
 
       console.log(queryBuilder.getSql());
 
@@ -256,6 +225,7 @@ export class UserService {
       .innerJoinAndSelect('user_roles', 'ur', 'ur.user_id = user.id')
       .where('ur.role_id = :roleId', { roleId })
       .andWhere('user.delFlag = :delFlag', { delFlag: '0' })
+
       .select([
         'user.id as id',
         'user.username as username',
@@ -292,18 +262,11 @@ export class UserService {
     }
   }
 
-  private async executeQuery(
-    queryBuilder: SelectQueryBuilder<User>,
-    current: number,
-    size: number,
-  ) {
+  private async executeQuery(queryBuilder: SelectQueryBuilder<User>, current: number, size: number) {
     try {
       const count = await queryBuilder.getCount();
       const pager = getPagination(count, current, size);
-      queryBuilder
-        .skip(pager.startRow)
-        .take(size)
-        .orderBy('user.create_time', 'DESC');
+      queryBuilder.skip(pager.startRow).take(size).orderBy('user.create_time', 'DESC');
 
       const list = await queryBuilder.getRawMany();
       return Result.list<User>(list, pager.pageInfo);
@@ -371,12 +334,69 @@ export class UserService {
     }
   }
 
+  /**
+   * 重置密码
+   * @param {number[]} ids
+   * @param {string} username 用户名
+   */
+  async resetPassword(ids: number[], username: string) {
+    const users = await this.userRepo.find({ where: { id: In(ids) } });
+    if (users.length <= 0) {
+      return Result.fail(QUERY_ERROR_CODE, '用户不存在');
+    }
+    const password = md5(md5(this.configService.get('application.default_password')));
+    users.forEach((user) => {
+      user.password = password;
+      user.updateBy = username;
+    });
+
+    try {
+      await this.userRepo.save(users);
+      return Result.ok('重置密码成功,密码为默认密码:admin123456');
+    } catch (e) {
+      return Result.fail(QUERY_ERROR_CODE, '重置密码失败');
+    }
+  }
+
+  /**
+   * 批量删除用户
+   * @param {number[]} ids 用户id集合
+   * @param {string} username 用户名
+   */
+  async batchDelete(ids: number[], username: string) {
+    const users = await this.userRepo.find({ where: { id: In(ids) } });
+    if (users.length <= 0) {
+      return Result.fail(QUERY_ERROR_CODE, '用户不存在');
+    }
+    users.forEach((user) => {
+      user.delFlag = '1';
+      user.deleteBy = username;
+      user.deleteTime = new Date();
+    });
+    try {
+      await this.userRepo.save(users);
+      return Result.ok('删除用户成功');
+    } catch (e) {
+      return Result.fail(QUERY_ERROR_CODE, '删除用户失败');
+    }
+  }
+
+  /**
+   * 创建部门实体
+   * @param deptId
+   * @private
+   */
   private createDeptEntity(deptId: number): Dept {
     const dept = new Dept();
     dept.id = deptId;
     return dept;
   }
 
+  /**
+   * 创建角色实体
+   * @param roles
+   * @private
+   */
   private createRoleEntities(roles: number[]): Role[] {
     return roles
       ? roles.map((id) => {
@@ -387,6 +407,11 @@ export class UserService {
       : [];
   }
 
+  /**
+   * 创建岗位实体
+   * @param posts
+   * @private
+   */
   private createPostEntities(posts: number[]): Post[] {
     return posts
       ? posts.map((id) => {

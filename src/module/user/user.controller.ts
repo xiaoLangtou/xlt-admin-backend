@@ -1,38 +1,11 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 
-import {
-  ApiBody,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiTags,
-} from '@nestjs/swagger';
-import {
-  RequireLogin,
-  RequirePermissions,
-  UserInfo,
-} from '@/common/decorator/custom.decorator';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { RequireLogin, RequirePermissions, UserInfo } from '@/common/decorator/custom.decorator';
 import { UserService } from '@/module/user/user.service';
 import { CreateUserDto } from '@/module/user/dto/create-user.dto';
-import {
-  ChangeUserStatusDto,
-  UpdateUserInfoDto,
-} from '@/module/user/dto/update-info.dto';
-import {
-  QueryUserDto,
-  QueryUserWithRolesDto,
-  RemoveUserDto,
-  RemoveUserRoleDto,
-} from '@/module/user/dto/query-user.dto';
+import { ChangeUserStatusDto, ResetPasswordDto, UpdateUserInfoDto } from '@/module/user/dto/update-info.dto';
+import { BatchRemoveUserDto, QueryUserDto, QueryUserWithRolesDto, RemoveUserDto, RemoveUserRoleDto } from '@/module/user/dto/query-user.dto';
 
 @ApiTags('用户管理模块')
 @Controller('user')
@@ -44,10 +17,7 @@ export class UserController {
   @ApiBody({ type: CreateUserDto, required: true })
   @RequirePermissions('admin:user:add')
   @Post('add')
-  async create(
-    @Body() createUserDto: CreateUserDto,
-    @UserInfo('username') username: string,
-  ) {
+  async create(@Body() createUserDto: CreateUserDto, @UserInfo('username') username: string) {
     return this.userService.create(createUserDto, username);
   }
 
@@ -55,10 +25,7 @@ export class UserController {
   @ApiBody({ type: UpdateUserInfoDto, required: true })
   @RequirePermissions('admin:user:edit')
   @Post('edit')
-  async updated(
-    @Body() userDto: UpdateUserInfoDto,
-    @UserInfo('username') username: string,
-  ) {
+  async updated(@Body() userDto: UpdateUserInfoDto, @UserInfo('username') username: string) {
     return this.userService.updated(userDto, username);
   }
 
@@ -74,10 +41,7 @@ export class UserController {
   @ApiParam({ name: 'id', description: '用户id' })
   @RequirePermissions('admin:user:delete')
   @Delete('remove/:id')
-  async delete(
-    @Param() removeDto: RemoveUserDto,
-    @UserInfo('username') username: string,
-  ) {
+  async delete(@Param() removeDto: RemoveUserDto, @UserInfo('username') username: string) {
     return this.userService.deleteUserById(removeDto.id, username);
   }
 
@@ -93,15 +57,8 @@ export class UserController {
   @ApiBody({ type: ChangeUserStatusDto, required: true })
   @RequirePermissions('admin:user:change:status')
   @Put('status')
-  async changeStatus(
-    @Body() changeUserStatusDto: ChangeUserStatusDto,
-    @UserInfo('username') username: string,
-  ) {
-    return this.userService.changeStatus(
-      changeUserStatusDto.id,
-      changeUserStatusDto.status,
-      username,
-    );
+  async changeStatus(@Body() changeUserStatusDto: ChangeUserStatusDto, @UserInfo('username') username: string) {
+    return this.userService.changeStatus(changeUserStatusDto.id, changeUserStatusDto.status, username);
   }
 
   @ApiOperation({ summary: '根据角色ID获取用户' })
@@ -118,5 +75,21 @@ export class UserController {
   @Put('remove/role')
   async removeRole(@Body() removeUserRoleDto: RemoveUserRoleDto) {
     return this.userService.removeUserRole(removeUserRoleDto);
+  }
+
+  @ApiOperation({ summary: '重置密码' })
+  @ApiBody({ type: ResetPasswordDto, required: true })
+  @RequirePermissions('admin:user:reset:password')
+  @Put('reset/password')
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto, @UserInfo('username') username: string) {
+    return this.userService.resetPassword(resetPasswordDto.ids, username);
+  }
+
+  @ApiOperation({ summary: '批量删除用户' })
+  @ApiBody({ type: BatchRemoveUserDto, required: true })
+  @RequirePermissions('admin:user:batch:delete')
+  @Put('remove/batch')
+  async batchDelete(@Body() removeUserDto: BatchRemoveUserDto, @UserInfo('username') username: string) {
+    return this.userService.batchDelete(removeUserDto.ids, username);
   }
 }

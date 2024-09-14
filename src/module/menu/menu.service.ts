@@ -205,11 +205,7 @@ export class MenuService {
     return Result.ok(menuTree);
   }
 
-  private setCommonMenuProperties(
-    menuEntity: Menu,
-    menu: CreateMenuDto | UpdateMenuDto,
-    username: string,
-  ) {
+  private setCommonMenuProperties(menuEntity: Menu, menu: CreateMenuDto | UpdateMenuDto, username: string) {
     menuEntity.menuType = menu.menuType;
     menuEntity.name = menu.name;
     menuEntity.enName = menu.enName;

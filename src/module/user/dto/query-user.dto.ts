@@ -1,10 +1,4 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsNumberString,
-  IsOptional,
-  ValidateIf,
-} from 'class-validator';
+import { ArrayNotEmpty, IsEnum, IsNotEmpty, IsNumberString, IsOptional, ValidateIf } from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { USER_IS_FROZEN } from '@/common/enums';
 import { PagerParamsDto } from '@/common/dto/index.dto';
@@ -90,4 +84,10 @@ export class RemoveUserDto {
   @IsNotEmpty({ message: '用户id不能为空' })
   @IsNumberString({}, { message: '用户id必须为数字' })
   id: number;
+}
+
+export class BatchRemoveUserDto {
+  @ApiProperty({ description: '用户id' })
+  @ArrayNotEmpty({ message: '用户id不能为空' })
+  ids: number[];
 }

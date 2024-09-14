@@ -1,18 +1,10 @@
 import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
-import {
-  RequireLogin,
-  RequirePermissions,
-  UserInfo,
-} from '@/common/decorator/custom.decorator';
+import { RequireLogin, RequirePermissions, UserInfo } from '@/common/decorator/custom.decorator';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { QueryRoleDto, RoleMenuDto } from './dto/query-role.dto';
-import {
-  ChangeRoleDto,
-  UpdateRoleDto,
-  UsersToRoleDto,
-} from './dto/update-role.dto';
+import { ChangeRoleDto, UpdateRoleDto, UsersToRoleDto } from './dto/update-role.dto';
 
 @Controller('role')
 @RequireLogin()
@@ -25,10 +17,7 @@ export class RoleController {
   })
   @Post('add')
   @RequirePermissions('admin:role:add')
-  create(
-    @Body() createRoleDto: CreateRoleDto,
-    @UserInfo('username') username: string,
-  ) {
+  create(@Body() createRoleDto: CreateRoleDto, @UserInfo('username') username: string) {
     return this.roleService.createRole(createRoleDto, username);
   }
 
@@ -37,15 +26,8 @@ export class RoleController {
   })
   @RequirePermissions('admin:role:edit')
   @Post('edit')
-  updateRole(
-    @Body() updateRoleDto: UpdateRoleDto,
-    @UserInfo('username') username: string,
-  ) {
-    return this.roleService.updateRole(
-      updateRoleDto.id,
-      updateRoleDto,
-      username,
-    );
+  updateRole(@Body() updateRoleDto: UpdateRoleDto, @UserInfo('username') username: string) {
+    return this.roleService.updateRole(updateRoleDto.id, updateRoleDto, username);
   }
 
   @ApiOperation({
@@ -87,10 +69,7 @@ export class RoleController {
   })
   @RequirePermissions('admin:role:status')
   @Put('changeStatus')
-  changeStatus(
-    @Body() changeRoleDto: ChangeRoleDto,
-    @UserInfo('username') username: string,
-  ) {
+  changeStatus(@Body() changeRoleDto: ChangeRoleDto, @UserInfo('username') username: string) {
     return this.roleService.changeRoleStatus(changeRoleDto, username);
   }
 
@@ -117,10 +96,7 @@ export class RoleController {
   @RequirePermissions('admin:role:users')
   @Post('add/users')
   addUsersToRole(@Body() usersToRoleDto: UsersToRoleDto) {
-    return this.roleService.addUsersToRole(
-      usersToRoleDto.roleId,
-      usersToRoleDto.users,
-    );
+    return this.roleService.addUsersToRole(usersToRoleDto.roleId, usersToRoleDto.users);
   }
 
   @ApiOperation({ summary: '移除角色用户' })
@@ -128,9 +104,6 @@ export class RoleController {
   @RequirePermissions('admin:role:users:remove')
   @Put('remove/users')
   removeUsersToRole(@Body() usersToRoleDto: UsersToRoleDto) {
-    return this.roleService.removeUsersFromRole(
-      usersToRoleDto.roleId,
-      usersToRoleDto.users,
-    );
+    return this.roleService.removeUsersFromRole(usersToRoleDto.roleId, usersToRoleDto.users);
   }
 }

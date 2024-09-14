@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
 import { UserModule } from '@/module/user/user.module';
 import { RedisModule } from '@/module/redis/redis.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EmailModule } from '@/module/email/email.module';
 import config from './config/config';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtModuleAsyncOptions } from '@nestjs/jwt';
 import { LoginGuard } from '@/common/guard/login.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { PermissionGuard } from '@/common/guard/permission.guard';
@@ -18,6 +18,7 @@ import {
   WINSTON_MODULE_NEST_PROVIDER,
   WinstonLogger,
   WinstonModule,
+  WinstonModuleAsyncOptions,
 } from 'nest-winston';
 import { AuthModule } from '@/module/auth/auth.module';
 import { DictModule } from './module/dict/dict.module';
@@ -41,7 +42,7 @@ import { PostModule } from './module/post/post.module';
         };
       },
       inject: [ConfigService],
-    }),
+    } as JwtModuleAsyncOptions),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [config],
@@ -70,7 +71,7 @@ import { PostModule } from './module/post/post.module';
         };
       },
       inject: [ConfigService, WINSTON_MODULE_NEST_PROVIDER],
-    }),
+    } as TypeOrmModuleAsyncOptions),
     WinstonModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
         level: 'debug',
@@ -82,15 +83,12 @@ import { PostModule } from './module/post/post.module';
             ...configService.get('application.logger.error'),
           }),
           new winston.transports.Console({
-            format: winston.format.combine(
-              winston.format.timestamp(),
-              utilities.format.nestLike(),
-            ),
+            format: winston.format.combine(winston.format.timestamp(), utilities.format.nestLike()),
           }),
         ],
       }),
       inject: [ConfigService],
-    }),
+    } as WinstonModuleAsyncOptions),
     UserModule,
     RedisModule,
     EmailModule,

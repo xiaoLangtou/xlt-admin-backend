@@ -1,5 +1,5 @@
 import { ApiProperty, IntersectionType, PartialType } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
+import { ArrayNotEmpty, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { CreateUserDto, RegisterUserDto } from './create-user.dto';
 import { USER_IS_FROZEN } from '@/common/enums';
 
@@ -11,10 +11,7 @@ export class UpdateUserInfoDto extends PartialType(CreateUserDto) {
 }
 
 // 当前用户自己更新信息
-export class UpdateActiveUserInfoDto extends IntersectionType(
-  RegisterUserDto,
-  UpdateUserInfoDto,
-) {
+export class UpdateActiveUserInfoDto extends IntersectionType(RegisterUserDto, UpdateUserInfoDto) {
   @ApiProperty({ required: false, description: '用户头像' })
   @IsOptional()
   headPic: string;
@@ -32,4 +29,13 @@ export class ChangeUserStatusDto {
   @IsEnum(USER_IS_FROZEN, { message: '状态不在范围内' })
   @IsNotEmpty({ message: '状态不能为空' })
   status: string;
+}
+
+/**
+ * 重置密码
+ */
+export class ResetPasswordDto {
+  @ApiProperty({ required: true, description: '用户id' })
+  @ArrayNotEmpty({ message: '用户id不能为空' })
+  ids: number[];
 }

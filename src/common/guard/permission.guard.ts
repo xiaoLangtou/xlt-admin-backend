@@ -1,10 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Inject,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { Reflector } from '@nestjs/core';
 
@@ -13,9 +7,7 @@ export class PermissionGuard implements CanActivate {
   @Inject()
   private reflector: Reflector;
 
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     const request = context.switchToHttp().getRequest();
     // 获取当前请求的用户信息
     if (!request.user) {
@@ -24,11 +16,10 @@ export class PermissionGuard implements CanActivate {
     const userPermissions = request.user.permissions;
 
     // 获取当前请求的权限 metadata
-    const requirePermissions = this.reflector.getAllAndOverride<string[]>(
-      'requirePermissions',
-      [context.getHandler(), context.getClass()],
-    );
-    console.log(userPermissions, requirePermissions, 'userPermissions');
+    const requirePermissions = this.reflector.getAllAndOverride<string[]>('requirePermissions', [
+      context.getHandler(),
+      context.getClass(),
+    ]);
     if (!requirePermissions) {
       return true;
     }
@@ -38,9 +29,7 @@ export class PermissionGuard implements CanActivate {
       return true;
     }
 
-    const hasPermission = requirePermissions.every((permission) =>
-      userPermissions.some((item) => item === permission),
-    );
+    const hasPermission = requirePermissions.every((permission) => userPermissions.some((item) => item === permission));
 
     if (!hasPermission) {
       throw new UnauthorizedException('用户无权限');

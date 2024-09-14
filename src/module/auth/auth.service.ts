@@ -8,7 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { RegisterUserDto } from '../user/dto/create-user.dto';
-import { Like, Repository } from 'typeorm';
+import { FindManyOptions, Like, Repository } from 'typeorm';
 import { User } from '@/module/user/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RedisService } from '@/module/redis/redis.service';
@@ -16,7 +16,7 @@ import { getPagination, md5 } from '@/common/utils/utils';
 import { LoginUserDto } from '@/module/user/dto/login-user.dto';
 import { CAPTCHA_TYPE, USER_IS_ADMIN, USER_IS_FROZEN } from '@/common/enums';
 import { LoginUserVo } from '@/module/user/vo/login-user.vo';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Role } from '@/module/role/entities/role.entity';
 import { UpdateUserPasswordDto } from '@/module/user/dto/update-password.dto';
@@ -127,16 +127,12 @@ export class AuthService {
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
     }
 
-    console.log(md5(loginUser.password));
     if (user.password !== md5(loginUser.password)) {
       throw new HttpException('密码错误', HttpStatus.BAD_REQUEST);
     }
 
     if (user.isFrozen === USER_IS_FROZEN.FROZEN) {
-      throw new HttpException(
-        '您已被禁用，如需正常使用请联系管理员',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('您已被禁用，如需正常使用请联系管理员', HttpStatus.BAD_REQUEST);
     }
 
     const userVo = await this.findUserById(user.id);
@@ -211,8 +207,7 @@ export class AuthService {
       userInfoVo.userInfo.permissions = ['*:*:*'];
     } else {
       // 根据角色id获取菜单权限
-      userInfoVo.userInfo.permissions =
-        await this.roleService.getRolePermissions(roleIds);
+      userInfoVo.userInfo.permissions = await this.roleService.getRolePermissions(roleIds);
     }
 
     return userInfoVo;
@@ -254,17 +249,14 @@ export class AuthService {
    * @param accTokenInfo
    * @param refTokenInfo
    */
-  setToken(
-    accTokenInfo,
-    refTokenInfo,
-  ): { accessToken: string; refreshToken: string } {
+  setToken(accTokenInfo, refTokenInfo): { accessToken: string; refreshToken: string } {
     const accessToken = this.jwtService.sign(
       {
         ...accTokenInfo,
       },
       {
-        expiresIn: this.configService.get('jwt.access_token_expires') || '30m',
-      },
+        expiresIn: this.configService.get('jwt.access_token_expires', { infer: true }) || '30m',
+      } as JwtSignOptions,
     );
 
     const refreshToken = this.jwtService.sign(
@@ -273,7 +265,7 @@ export class AuthService {
       },
       {
         expiresIn: this.configService.get('jwt.refresh_token_expires') || '7d',
-      },
+      } as JwtSignOptions,
     );
 
     return { accessToken, refreshToken };
@@ -325,9 +317,7 @@ export class AuthService {
     });
 
     activeUser.email = userDto.email?.trim();
-    activeUser.nickname = userDto.nickname
-      ? userDto.nickname
-      : activeUser.nickname;
+    activeUser.nickname = userDto.nickname ? userDto.nickname : activeUser.nickname;
     activeUser.headPic = userDto.headPic ? userDto.headPic : activeUser.headPic;
 
     try {
@@ -343,14 +333,9 @@ export class AuthService {
   }
 
   async sendCaptcha(email: string, type: CAPTCHA_TYPE) {
-    if (
-      !type ||
-      ![
-        CAPTCHA_TYPE.REGISTER,
-        CAPTCHA_TYPE.UPDATE_PASSWORD,
-        CAPTCHA_TYPE.UPDATE_INFO,
-      ].includes(type)
-    ) {
+    const has =
+      !type || ![CAPTCHA_TYPE.REGISTER, CAPTCHA_TYPE.UPDATE_PASSWORD, CAPTCHA_TYPE.UPDATE_INFO].includes(type);
+    if (has) {
       throw new BadRequestException('验证码类型错误');
     }
 
@@ -399,13 +384,7 @@ export class AuthService {
     });
   }
 
-  async getList(
-    username: string,
-    email: string,
-    nickname: string,
-    current = 1,
-    size = 10,
-  ) {
+  async getList(username: string, email: string, nickname: string, current = 1, size = 10) {
     // 获取查询条件符合的分页
     const _where: Record<string, any> = {};
 
@@ -419,19 +398,10 @@ export class AuthService {
 
     const [list] = await this.userRepository.findAndCount({
       where: _where,
-      select: [
-        'id',
-        'username',
-        'email',
-        'nickname',
-        'headPic',
-        'phoneNumber',
-        'createTime',
-        'isFrozen',
-      ],
+      select: ['id', 'username', 'email', 'nickname', 'headPic', 'phoneNumber', 'createTime', 'isFrozen'],
       skip: startRow,
       take: size,
-    });
+    } as FindManyOptions<User>);
 
     return {
       records: list,
