@@ -75,14 +75,13 @@ export class MenuController {
 
   /**
    * 获取用户菜单列表
-   * @param roles
+   * @param userInfo
    */
   @ApiOperation({
     summary: '获取用户菜单列表',
   })
-  @RequirePermissions('admin:menu:user:list')
   @Get('/user/list')
-  async getUserMenuList(@UserInfo('roles') roles: any[]) {
-    return await this.menuService.getUserMenuList(roles);
+  async getUserMenuList(@UserInfo() userInfo: any) {
+    return await this.menuService.getUserMenuList(userInfo);
   }
 }

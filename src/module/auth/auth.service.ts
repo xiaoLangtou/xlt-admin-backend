@@ -14,16 +14,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { RedisService } from '@/module/redis/redis.service';
 import { getPagination, md5 } from '@/common/utils/utils';
 import { LoginUserDto } from '@/module/user/dto/login-user.dto';
-import { CAPTCHA_TYPE, USER_IS_ADMIN, USER_IS_FROZEN } from '@/common/enums';
+import { CACHE_KEY, CAPTCHA_TYPE, USER_IS_ADMIN, USER_IS_FROZEN } from '@/common/enums';
 import { LoginUserVo } from '@/module/user/vo/login-user.vo';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Role } from '@/module/role/entities/role.entity';
-import { UpdateUserPasswordDto } from '@/module/user/dto/update-password.dto';
-import { UpdateActiveUserInfoDto } from '@/module/user/dto/update-info.dto';
 import { EmailService } from '@/module/email/email.service';
 import { Result } from '@/common/utils/result';
 import { RoleService } from '@/module/role/role.service';
+import { LoginLogService } from '@/module/monitor/login-log/login-log.service';
+import { REDIS_LOGIN_USER_EXPIRE_TIME } from '@/common/constant';
 
 @Injectable()
 export class AuthService {
@@ -74,6 +74,9 @@ export class AuthService {
   @InjectRepository(Role)
   private roleRepository: Repository<Role>;
 
+  @Inject(LoginLogService)
+  private loginLogService: LoginLogService;
+
   /**
    * 注册
    * @param userDto
@@ -112,47 +115,62 @@ export class AuthService {
   /**
    * 登录
    * @param loginUser
-   * @param isAdmin
+   * @param clientInfo
    */
-  async login(loginUser: LoginUserDto, isAdmin = USER_IS_ADMIN.NO) {
+  async login(loginUser: LoginUserDto, clientInfo: any) {
     const user = await this.userRepository.findOne({
       where: {
         username: loginUser.username,
-        isAdmin,
+        isAdmin: USER_IS_ADMIN.YES,
       },
       select: ['username', 'password', 'roles', 'id', 'isFrozen'],
       relations: ['roles'],
     });
+
     if (!user) {
+      this.recordLoginLog({ ...clientInfo, msg: '用户不存在', status: 0 }, user);
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
     }
 
     if (user.password !== md5(loginUser.password)) {
+      this.recordLoginLog({ ...clientInfo, msg: '密码错误', status: 0 }, user);
       throw new HttpException('密码错误', HttpStatus.BAD_REQUEST);
     }
 
     if (user.isFrozen === USER_IS_FROZEN.FROZEN) {
+      this.recordLoginLog({ ...clientInfo, msg: '用户已被冻结', status: 0 }, user);
       throw new HttpException('您已被禁用，如需正常使用请联系管理员', HttpStatus.BAD_REQUEST);
     }
 
     const userVo = await this.findUserById(user.id);
-    const { accessToken, refreshToken } = this.setToken(
-      {
-        userId: userVo.userInfo.id,
-        username: userVo.userInfo.username,
-        roles: userVo.userInfo.roles,
-        permissions: userVo.userInfo.permissions,
-      },
-      {
-        userId: userVo.userInfo.id,
-      },
-    );
+
+    const tokenInfo = {
+      userId: userVo.userInfo.id,
+      username: userVo.userInfo.username,
+      roles: userVo.userInfo.roles,
+      permissions: userVo.userInfo.permissions,
+    };
+
+    const { accessToken, refreshToken } = this.setToken(tokenInfo, {
+      userId: tokenInfo.userId,
+    });
 
     userVo.accessToken = accessToken;
-
     userVo.refreshToken = refreshToken;
 
-    return Result.ok(userVo, '登录成功');
+    // 将用户信息存入redis
+    await this.redisService.set(
+      `${CACHE_KEY.USER_INFO}${md5(`${user.username}-${user.id}`)}`,
+      {
+        ...userVo,
+        ...clientInfo,
+      },
+      REDIS_LOGIN_USER_EXPIRE_TIME,
+    );
+
+    this.recordLoginLog({ ...clientInfo, msg: '登录成功', status: 1 }, user);
+
+    return Result.ok({ accessToken: userVo.accessToken, refreshToken: userVo.refreshToken }, '登录成功');
   }
 
   /**
@@ -181,7 +199,7 @@ export class AuthService {
 
       user.refreshToken = refreshToken;
 
-      return user;
+      return { accessToken: user.accessToken, refreshToken: user.refreshToken };
     } catch (e) {
       throw new UnauthorizedException('token无效,请重新登录');
     }
@@ -226,7 +244,6 @@ export class AuthService {
    */
   setUserInfo(userInfo: User): LoginUserVo {
     const userVo = new LoginUserVo();
-
     userVo.userInfo = {
       id: userInfo.id,
       username: userInfo.username,
@@ -271,65 +288,43 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async updateUserPassword(userDto: UpdateUserPasswordDto, id: number) {
-    const captchaKey = `captcha:update_password:${userDto.email}`;
-    const captcha = await this.redisService.get(captchaKey);
-
-    if (!captcha) {
-      throw new HttpException('验证码已过期', HttpStatus.BAD_REQUEST);
-    }
-
-    if (userDto.captcha !== captcha) {
-      throw new HttpException('验证码错误', HttpStatus.BAD_REQUEST);
-    }
-
-    const activeUser = await this.userRepository.findOneBy({
+  /**
+   * 退出登录
+   * @param userDto
+   * @param id
+   */
+  async logout(id: number, clientInfo: any) {
+    //根据id获取用户信息
+    const userDto = await this.userRepository.findOneBy({
       id: id,
     });
-
-    activeUser.password = md5(userDto.password);
-
-    try {
-      await this.userRepository.save(activeUser);
-      this.redisService.del(captchaKey);
-      return '密码修改成功';
-    } catch (e) {
-      this.logger.error(e);
-      this.redisService.del(captchaKey);
-      return '密码修改失败';
+    if (!userDto) {
+      this.recordLoginLog({ ...clientInfo, msg: '退出登录失败,用户不存在', status: 0 }, userDto);
+      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
     }
+    // 删除用户信息缓存
+    await this.redisService.del(`${CACHE_KEY.USER_INFO}${md5(`${userDto.username}-${id}`)}`);
+
+    // 删除用户菜单缓存
+    await this.redisService.del(`${CACHE_KEY.USER_MENU}${md5(`${userDto.username}-${id}`)}`);
+    this.recordLoginLog({ ...clientInfo, msg: '退出登录', status: 1 }, userDto);
+
+    return Result.ok('退出登录成功');
   }
 
-  async updateUserInfo(userDto: UpdateActiveUserInfoDto) {
-    const captchaKey = `captcha:update_info:${userDto.email}`;
-    const captcha = await this.redisService.get(captchaKey);
-
-    if (!captcha) {
-      throw new HttpException('验证码已过期', HttpStatus.BAD_REQUEST);
-    }
-
-    if (userDto.captcha !== captcha) {
-      throw new HttpException('验证码错误', HttpStatus.BAD_REQUEST);
-    }
-
-    const activeUser = await this.userRepository.findOneBy({
-      id: userDto.id,
-    });
-
-    activeUser.email = userDto.email?.trim();
-    activeUser.nickname = userDto.nickname ? userDto.nickname : activeUser.nickname;
-    activeUser.headPic = userDto.headPic ? userDto.headPic : activeUser.headPic;
-
-    try {
-      await this.userRepository.save(activeUser);
-
-      this.redisService.del(captchaKey);
-      return '基础信息修改成功';
-    } catch (e) {
-      this.logger.error(e);
-      this.redisService.del(captchaKey);
-      return '基础信息修改失败';
-    }
+  /**
+   * 记录登录日志
+   */
+  private async recordLoginLog(clientInfo: any, user?: User) {
+    const loginLog = {
+      username: user?.username || '',
+      ipaddr: clientInfo.ip,
+      loginTime: new Date(),
+      createBy: user?.username || '',
+      updateBy: user?.username || '',
+      ...clientInfo,
+    };
+    await this.loginLogService.create(loginLog);
   }
 
   async sendCaptcha(email: string, type: CAPTCHA_TYPE) {
@@ -365,23 +360,6 @@ export class AuthService {
     });
 
     return '验证码已发送';
-  }
-
-  async freezeUser(userId: number) {
-    console.log(userId);
-    const user = await this.userRepository.findOneBy({
-      id: userId,
-    });
-    console.log(user);
-
-    if (!user) {
-      throw new BadRequestException('用户不存在');
-    }
-
-    return this.userRepository.save({
-      ...user,
-      isFrozen: USER_IS_FROZEN.FROZEN,
-    });
   }
 
   async getList(username: string, email: string, nickname: string, current = 1, size = 10) {

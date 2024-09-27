@@ -65,3 +65,8 @@ export enum SEX_ENUM {
   WOMAN = 2,
   UNKNOWN = 3,
 }
+
+export enum CACHE_KEY {
+  USER_INFO = 'LOGIN_USER_TOKEN:USER_INFO:',
+  USER_MENU = 'LOGIN_USER_TOKEN:USER_MENU:',
+}

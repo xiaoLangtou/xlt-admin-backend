@@ -28,6 +28,8 @@ import 'winston-daily-rotate-file';
 import { RoleModule } from './module/role/role.module';
 import { DeptModule } from './module/dept/dept.module';
 import { PostModule } from './module/post/post.module';
+import { LoginLogModule } from './module/monitor/login-log/login-log.module';
+import { AxiosModule } from './module/axios/axios.module';
 
 @Module({
   imports: [
@@ -75,12 +77,27 @@ import { PostModule } from './module/post/post.module';
     WinstonModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
         level: 'debug',
+        levels: { ...winston.config.syslog.levels, sql: 8 },
         transports: [
           new winston.transports.DailyRotateFile({
             ...configService.get('application.logger.info'),
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              winston.format.printf((logs) => {
+                const { timestamp, level, message } = logs;
+                return `[${timestamp}] [${level}]: ${message.replace(/\u001b\[[0-9;]*m/g, '')}\r\n`;
+              }),
+            ),
           }),
           new winston.transports.DailyRotateFile({
             ...configService.get('application.logger.error'),
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              winston.format.printf((logs) => {
+                const { timestamp, level, message, stack } = logs;
+                return `[${timestamp}] [${level}]: ${message.replace(/\u001b\[[0-9;]*m/g, '')}\r\n[stack]: ${JSON.stringify(stack)}\r\n`;
+              }),
+            ),
           }),
           new winston.transports.Console({
             format: winston.format.combine(winston.format.timestamp(), utilities.format.nestLike()),
@@ -98,6 +115,8 @@ import { PostModule } from './module/post/post.module';
     RoleModule,
     DeptModule,
     PostModule,
+    LoginLogModule,
+    AxiosModule,
   ],
   controllers: [AppController],
   providers: [

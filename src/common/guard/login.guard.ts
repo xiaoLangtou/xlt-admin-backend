@@ -1,10 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Inject,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
@@ -30,14 +24,9 @@ export class LoginGuard implements CanActivate {
   @Inject(JwtService)
   private jwtService: JwtService;
 
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     const request = context.switchToHttp().getRequest();
-    const requireLogin = this.reflector.getAllAndOverride('requireLogin', [
-      context.getClass(),
-      context.getHandler(),
-    ]);
+    const requireLogin = this.reflector.getAllAndOverride('requireLogin', [context.getClass(), context.getHandler()]);
 
     if (!requireLogin) {
       return true;

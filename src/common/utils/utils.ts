@@ -26,11 +26,7 @@ export function Uniq(list: Array<number | string>) {
   return Lodash.uniq(list);
 }
 
-export function getPagination(
-  count: number,
-  current: number,
-  pageSize: number,
-) {
+export function getPagination(count: number, current: number, pageSize: number) {
   const pager = new Pager(current, pageSize, count);
 
   return {
@@ -39,14 +35,14 @@ export function getPagination(
   };
 }
 
-export function arrayToTree<
-  T extends { id: any; parentId: any; children?: T[] },
->(items: T[], rootId: number = -1): T[] {
+export function arrayToTree<T extends { id: any; parentId: any; children?: T[] }>(
+  items: T[],
+  rootId: number = -1,
+): T[] {
   if (!items || items.length <= 0) return [];
   if (items.length <= 1) {
     // 处理数组只有一个元素的情况，如果它没有父元素或者父元素匹配rootId，则返回它
-    return items.length === 1 &&
-      (items[0].parentId == rootId || items[0].parentId === -1)
+    return items.length === 1 && (items[0].parentId == rootId || items[0].parentId === -1)
       ? [{ ...items[0], children: [] }]
       : [];
   }
@@ -58,7 +54,6 @@ export function arrayToTree<
   items.forEach((item) => {
     map.set(item.id, { ...item, children: [] });
   });
-  console.log(map, 'map');
   // Step 2: 构建树形结构。
   items.forEach((item) => {
     const node = map.get(item.id);

@@ -13,44 +13,22 @@ export default class CustomTypeOrmLogger implements Logger {
     if (queryRunner?.data?.isCreatingLogs) {
       return;
     }
-    this.winstonLogger.log(
-      chalk.cyan(
-        `${query} -- Parameters: ${this.stringifyParameters(parameters)}`,
-      ),
-    );
+    this.winstonLogger.log(`${query} -- Parameters: ${this.stringifyParameters(parameters)}`);
   }
 
-  logQueryError(
-    error: string | Error,
-    query: string,
-    parameters?: any[],
-    queryRunner?: QueryRunner,
-  ): any {
+  logQueryError(error: string | Error, query: string, parameters?: any[], queryRunner?: QueryRunner): any {
     if (queryRunner?.data?.isCreatingLogs) {
       return;
     }
     console.trace(error);
-    this.winstonLogger.error(
-      chalk.red(
-        `${query} `,
-        `Parameters: ${this.stringifyParameters(parameters)}`,
-        `${error}`,
-      ),
-    );
+    this.winstonLogger.error(chalk.red(`${query} `, `Parameters: ${this.stringifyParameters(parameters)}`, `${error}`));
   }
 
-  logQuerySlow(
-    time: number,
-    query: string,
-    parameters?: any[],
-    queryRunner?: QueryRunner,
-  ): any {
+  logQuerySlow(time: number, query: string, parameters?: any[], queryRunner?: QueryRunner): any {
     if (queryRunner?.data?.isCreatingLogs) {
       return;
     }
-    this.winstonLogger.warn(
-      `Time: ${time} -- Parameters: ${this.stringifyParameters(parameters)} -- ${query}`,
-    );
+    this.winstonLogger.warn(`Time: ${time} -- Parameters: ${this.stringifyParameters(parameters)} -- ${query}`);
   }
 
   logSchemaBuild(message: string, queryRunner?: QueryRunner): any {

@@ -2,12 +2,14 @@ import { Inject, Injectable } from '@nestjs/common';
 import { In, Repository } from 'typeorm';
 import { Menu } from '@/module/menu/entities/menu.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { arrayToTree } from '@/common/utils/utils';
+import { arrayToTree, md5 } from '@/common/utils/utils';
 import { Result } from '@/common/utils/result';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from '@/module/menu/dto/update-menu.dto';
-import { CREATE_TIME_FORMAT, QUERY_ERROR_CODE } from '@/common/constant';
+import { CREATE_TIME_FORMAT, QUERY_ERROR_CODE, REDIS_LOGIN_USER_EXPIRE_TIME } from '@/common/constant';
 import { RoleService } from '@/module/role/role.service';
+import { RedisService } from '@/module/redis/redis.service';
+import { CACHE_KEY } from '@/common/enums';
 
 @Injectable()
 export class MenuService {
@@ -16,6 +18,9 @@ export class MenuService {
 
   @Inject(RoleService)
   private readonly roleService: RoleService;
+
+  @Inject(RedisService)
+  private readonly redisService: RedisService;
 
   /**
    * @description 创建菜单
@@ -121,10 +126,31 @@ export class MenuService {
   /**
    * @description 获取当前用户菜单列表
    */
-  async getUserMenuList(roles: any[]) {
-    // todo 获取用户角色
-    const rolesIds = roles.map((item) => item.id);
-    const menuIds = await this.roleService.getMenusByRoleIds(rolesIds);
+  async getUserMenuList(userInfo: any) {
+    // 从redis中获取用户菜单列表
+    let menuTree = [];
+    const cacheMenuList = await this.getUserMenuListFromRedis(userInfo.userId, userInfo.username);
+    if (cacheMenuList.length <= 0) {
+      console.log('缓存中没有菜单数据,重新获取');
+      const { username, roles, userId } = userInfo;
+      const rolesIds = roles.map((item) => item.id);
+      const menuIds = await this.roleService.getMenusByRoleIds(rolesIds);
+      menuTree = await this.fetchAndBuildMenuTree(menuIds);
+      if (menuTree.length <= 0) {
+        return Result.fail(QUERY_ERROR_CODE, '暂无菜单数据,请联系管理员');
+      }
+      // 将用户菜单列表存入redis
+      await this.redisService.set(
+        `${CACHE_KEY.USER_MENU}${md5(`${userId}-${username}`)}`,
+        menuTree,
+        REDIS_LOGIN_USER_EXPIRE_TIME,
+      );
+    } else {
+      menuTree = cacheMenuList;
+    }
+    return Result.ok(menuTree);
+  }
+  private async fetchAndBuildMenuTree(menuIds: (number | string)[]): Promise<any[]> {
     const menuList = await this.menuRepository.find({
       select: [
         'id',
@@ -150,23 +176,42 @@ export class MenuService {
         sortOrder: 'ASC',
       },
     });
-    if (menuList.length <= 0) {
-      return Result.fail(QUERY_ERROR_CODE, '暂无菜单数据,请联系管理员');
-    }
 
-    // 检查是否所有数据都没有父节点
-    let menuTree = menuList;
+    if (menuList.length <= 0) {
+      return [];
+    }
+    return this.buildMenuTree(menuList);
+  }
+
+  private buildMenuTree(menuList: any[]): any[] {
     const allNoParentNode = menuList.every((menu) => menu.parentMenuId != -1);
+
+    console.log('allNoParentNode', allNoParentNode);
+
     if (!allNoParentNode) {
-      menuTree = arrayToTree(
-        menuList.map((item) => {
-          return { ...item, parentId: item.parentMenuId };
-        }),
+      const menuTree = arrayToTree(
+        menuList.map((item) => ({
+          ...item,
+          parentId: item.parentMenuId,
+        })),
         -1,
       );
+      this.addMetaProperties(menuTree);
+      return menuTree;
     }
-    this.addMetaProperties(menuTree);
-    return Result.ok(menuTree);
+
+    this.addMetaProperties(menuList);
+    return menuList;
+  }
+
+  // 获取用户菜单列表
+  async getUserMenuListFromRedis(userId: number, username: string) {
+    const key = `${CACHE_KEY.USER_MENU}${md5(`${userId}-${username}`)}`;
+    const menuList = await this.redisService.get(key);
+    if (menuList) {
+      return menuList;
+    }
+    return [];
   }
 
   /**

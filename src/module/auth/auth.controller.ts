@@ -1,23 +1,12 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  HttpStatus,
-  Param,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpStatus, Post, Query, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterUserDto } from '@/module/user/dto/create-user.dto';
-
 import { LoginUserDto } from '@/module/user/dto/login-user.dto';
-import { CAPTCHA_TYPE, USER_IS_ADMIN } from '@/common/enums';
+import { CAPTCHA_TYPE } from '@/common/enums';
 import { RequireLogin, UserInfo } from '@/common/decorator/custom.decorator';
-import { UpdateUserPasswordDto } from '@/module/user/dto/update-password.dto';
-import { UpdateActiveUserInfoDto } from '@/module/user/dto/update-info.dto';
 import { ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Result } from '@/common/utils/result';
+import * as UserA from 'useragent';
 
 @ApiTags('登录/注册')
 @Controller('auth')
@@ -50,8 +39,18 @@ export class AuthController {
   }
 
   @Post('/login')
-  async login(@Body() loginUser: LoginUserDto) {
-    return await this.authService.login(loginUser, USER_IS_ADMIN.YES);
+  async login(@Body() loginUser: LoginUserDto, @Request() request: any) {
+    const agent = UserA.parse(request.headers['user-agent']);
+    const os = agent.os.toJSON().family;
+    const browser = agent.toAgent();
+    const clientInfo = {
+      userAgent: request.headers['user-agent'],
+      ip: request.ip,
+      os: os,
+      browser: browser,
+      location: '',
+    };
+    return await this.authService.login(loginUser, clientInfo);
   }
 
   @Get('/refresh-token')
@@ -68,48 +67,32 @@ export class AuthController {
     return Result.ok(await this.authService.findUserById(id));
   }
 
-  @Get('/details/:id')
-  @RequireLogin()
-  async userDetails(@Param('id') id: number) {
-    if (!id) {
-      throw new BadRequestException('用户ID不能为空');
-    }
-    return await this.authService.findUserById(id);
-  }
-
-  @Post(['/update_password', '/admin/update_password'])
-  @RequireLogin()
-  async update(
-    @UserInfo('userId') id: number,
-    @Body() userDto: UpdateUserPasswordDto,
-  ) {
-    return this.authService.updateUserPassword(userDto, id);
-  }
-
-  @Post(['/update_info', '/admin/update_info'])
-  @RequireLogin()
-  async updateInfo(@Body() userDto: UpdateActiveUserInfoDto) {
-    return this.authService.updateUserInfo(userDto);
-  }
-
   @Post('/update/captcha')
   @RequireLogin()
-  async updateCaptcha(
-    @UserInfo('userId') userId: number,
-    @Query('type') type: CAPTCHA_TYPE,
-  ) {
+  async updateCaptcha(@UserInfo('userId') userId: number, @Query('type') type: CAPTCHA_TYPE) {
     const userInfo = await this.authService.getUserDetail(userId);
-
     return await this.authService.sendCaptcha(userInfo.email, type);
   }
 
-  @Post('/freeze')
-  async freeze(@Body('id') userId: number) {
-    if (!userId) {
-      throw new BadRequestException('用户ID不能为空');
-    }
+  @RequireLogin()
+  @Get('/permission')
+  async getUserPermission(@UserInfo('permissions') permissions: any) {
+    return Result.ok(permissions);
+  }
 
-    await this.authService.freezeUser(userId);
-    return '冻结成功';
+  @RequireLogin()
+  @Post('/logout')
+  async logout(@UserInfo('userId') userId: number, @Request() request: any) {
+    const agent = UserA.parse(request.headers['user-agent']);
+    const os = agent.os.toJSON().family;
+    const browser = agent.toAgent();
+    const clientInfo = {
+      userAgent: request.headers['user-agent'],
+      ip: request.ip,
+      os: os,
+      browser: browser,
+      location: '',
+    };
+    return await this.authService.logout(userId, clientInfo);
   }
 }
