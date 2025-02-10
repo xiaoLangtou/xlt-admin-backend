@@ -66,7 +66,32 @@ export enum SEX_ENUM {
   UNKNOWN = 3,
 }
 
+/**
+ * 通用状态枚举
+ * SUCCESS：成功
+ * FAIL：失败
+ */
+export enum COMMON_STATUS {
+  SUCCESS = 1,
+  FAIL = 0,
+}
+
 export enum CACHE_KEY {
   USER_INFO = 'LOGIN_USER_TOKEN:USER_INFO:',
   USER_MENU = 'LOGIN_USER_TOKEN:USER_MENU:',
+}
+
+
+/**
+ * 请求方式枚举
+ */
+export enum REQUEST_METHOD {
+  GET = 'GET',
+  POST = 'POST',
+  PUT = 'PUT',
+  DELETE = 'DELETE',
+  PATCH = 'PATCH',
+  HEAD = 'HEAD',
+  OPTIONS = 'OPTIONS',
+  TRACE = 'TRACE',
 }

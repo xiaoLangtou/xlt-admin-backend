@@ -1,34 +1,13 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { PostService } from './post.service';
-import {
-  RequireLogin,
-  RequirePermissions,
-  UserInfo,
-} from '@/common/decorator/custom.decorator';
-import {
-  ApiBody,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiTags,
-} from '@nestjs/swagger';
+import { RequireLogin, RequirePermissions, UserInfo } from '@/common/decorator/custom.decorator';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreatePostDto } from '@/module/post/dto/create-post.dto';
 import { UpdatePostDto } from '@/module/post/dto/update-post.dto';
-import {
-  ChangeStatusDto,
-  QueryPostDto,
-} from '@/module/post/dto/query-post.dto';
+import { ChangeStatusDto, QueryPostDto } from '@/module/post/dto/query-post.dto';
 
 @ApiTags('岗位管理')
+@ApiBearerAuth()
 @RequireLogin()
 @Controller('post')
 export class PostController {

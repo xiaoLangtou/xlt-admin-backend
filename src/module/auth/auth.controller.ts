@@ -4,7 +4,7 @@ import { RegisterUserDto } from '@/module/user/dto/create-user.dto';
 import { LoginUserDto } from '@/module/user/dto/login-user.dto';
 import { CAPTCHA_TYPE } from '@/common/enums';
 import { RequireLogin, UserInfo } from '@/common/decorator/custom.decorator';
-import { ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Result } from '@/common/utils/result';
 import * as UserA from 'useragent';
 
@@ -38,6 +38,7 @@ export class AuthController {
     return await this.authService.sendCaptcha(email, CAPTCHA_TYPE.REGISTER);
   }
 
+  @ApiOperation({ summary: '用户登录' })
   @Post('/login')
   async login(@Body() loginUser: LoginUserDto, @Request() request: any) {
     const agent = UserA.parse(request.headers['user-agent']);
@@ -74,12 +75,14 @@ export class AuthController {
     return await this.authService.sendCaptcha(userInfo.email, type);
   }
 
+  @ApiOperation({ summary: '用户权限' })
   @RequireLogin()
   @Get('/permission')
   async getUserPermission(@UserInfo('permissions') permissions: any) {
     return Result.ok(permissions);
   }
 
+  @ApiOperation({ summary: '用户退出登录' })
   @RequireLogin()
   @Post('/logout')
   async logout(@UserInfo('userId') userId: number, @Request() request: any) {

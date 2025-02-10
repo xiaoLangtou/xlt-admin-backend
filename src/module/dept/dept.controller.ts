@@ -1,35 +1,18 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { DeptService } from './dept.service';
-import {
-  ApiBody,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateDeptDto } from '@/module/dept/dto/create-dept.dto';
-import {
-  RequireLogin,
-  RequirePermissions,
-  UserInfo,
-} from '@/common/decorator/custom.decorator';
+import { RequireLogin, RequirePermissions, UserInfo } from '@/common/decorator/custom.decorator';
 import { UpdateDeptDto } from '@/module/dept/dto/update-dept.dto';
 import { ChangeDeptDto, QueryDeptDto } from '@/module/dept/dto/query-dept.dto';
 
 @ApiTags('部门管理')
+@ApiBearerAuth()
 @Controller('dept')
 @RequireLogin()
 export class DeptController {
-  constructor(private readonly deptService: DeptService) {}
+  constructor(private readonly deptService: DeptService) {
+  }
 
   @ApiOperation({ summary: '创建部门' })
   @ApiBody({

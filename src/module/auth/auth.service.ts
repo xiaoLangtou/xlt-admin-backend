@@ -129,17 +129,17 @@ export class AuthService {
 
     if (!user) {
       this.recordLoginLog({ ...clientInfo, msg: '用户不存在', status: 0 }, user);
-      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+      return Result.fail(40001, '用户不存在');
     }
 
     if (user.password !== md5(loginUser.password)) {
       this.recordLoginLog({ ...clientInfo, msg: '密码错误', status: 0 }, user);
-      throw new HttpException('密码错误', HttpStatus.BAD_REQUEST);
+      return Result.fail(40001, '密码错误');
     }
 
     if (user.isFrozen === USER_IS_FROZEN.FROZEN) {
       this.recordLoginLog({ ...clientInfo, msg: '用户已被冻结', status: 0 }, user);
-      throw new HttpException('您已被禁用，如需正常使用请联系管理员', HttpStatus.BAD_REQUEST);
+      return Result.fail(40001, '您已被禁用，如需正常使用请联系管理员');
     }
 
     const userVo = await this.findUserById(user.id);
@@ -168,7 +168,7 @@ export class AuthService {
       REDIS_LOGIN_USER_EXPIRE_TIME,
     );
 
-    this.recordLoginLog({ ...clientInfo, msg: '登录成功', status: 1 }, user);
+    await this.recordLoginLog({ ...clientInfo, msg: '登录成功', status: 1 }, user);
 
     return Result.ok({ accessToken: userVo.accessToken, refreshToken: userVo.refreshToken }, '登录成功');
   }
@@ -303,8 +303,8 @@ export class AuthService {
       throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
     }
     // 删除用户信息缓存
+    console.log(userDto.username, id);
     await this.redisService.del(`${CACHE_KEY.USER_INFO}${md5(`${userDto.username}-${id}`)}`);
-
     // 删除用户菜单缓存
     await this.redisService.del(`${CACHE_KEY.USER_MENU}${md5(`${userDto.username}-${id}`)}`);
     this.recordLoginLog({ ...clientInfo, msg: '退出登录', status: 1 }, userDto);

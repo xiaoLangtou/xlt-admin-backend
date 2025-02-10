@@ -2,13 +2,15 @@ import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { RequireLogin, RequirePermissions, UserInfo } from '@/common/decorator/custom.decorator';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { QueryRoleDto, RoleMenuDto } from './dto/query-role.dto';
 import { ChangeRoleDto, UpdateRoleDto, UsersToRoleDto } from './dto/update-role.dto';
 
-@Controller('role')
-@RequireLogin()
+
 @ApiTags('角色管理')
+@ApiBearerAuth()
+@RequireLogin()
+@Controller('role')
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 

@@ -97,7 +97,20 @@ export class UserService {
   async getUserById(id: number) {
     const user = await this.userRepo.findOne({
       where: { id, delFlag: '0' },
-      select: ['id', 'username', 'nickname', 'email', 'name', 'jobNumber', 'phoneNumber', 'sex', 'dept', 'roles', 'posts', 'remark'],
+      select: [
+        'id',
+        'username',
+        'nickname',
+        'email',
+        'name',
+        'jobNumber',
+        'phoneNumber',
+        'sex',
+        'dept',
+        'roles',
+        'posts',
+        'remark',
+      ],
       relations: ['dept', 'posts', 'roles'],
     });
     return Result.ok(user);
@@ -131,7 +144,7 @@ export class UserService {
     const { current = 1, size = 10, ...otherParams } = query;
     const queryBuilder = await this.userRepo.createQueryBuilder('user');
     queryBuilder.innerJoinAndSelect('user.dept', 'dept');
-    queryBuilder.where('user.delFlag = :delFlag', { delFlag: '0' }).andWhere('user.username != :username', { username: 'admin' });
+    queryBuilder.where('user.delFlag = :delFlag', { delFlag: '0' });
 
     queryBuilder.select([
       'user.id as id',
@@ -195,7 +208,11 @@ export class UserService {
 
       console.log(pager);
 
-      const list = await queryBuilder.offset(pager.startRow).limit(pager.pageInfo.pageSize).orderBy('user.create_time', 'DESC').getRawMany();
+      const list = await queryBuilder
+        .offset(pager.startRow)
+        .limit(pager.pageInfo.pageSize)
+        .orderBy('user.create_time', 'DESC')
+        .getRawMany();
 
       console.log(queryBuilder.getSql());
 

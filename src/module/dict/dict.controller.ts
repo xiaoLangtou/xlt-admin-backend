@@ -1,35 +1,12 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { DictService } from './dict.service';
-import {
-  ApiBody,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiTags,
-} from '@nestjs/swagger';
-import {
-  CreateDictDataDto,
-  CreateDictDto,
-} from '@/module/dict/dto/create-dict.dto';
-import {
-  RequireLogin,
-  RequirePermissions,
-  UserInfo,
-} from '@/common/decorator/custom.decorator';
-import {
-  UpdateDictDataDto,
-  UpdateDictDto,
-} from '@/module/dict/dto/update-dict.dto';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { CreateDictDataDto, CreateDictDto } from '@/module/dict/dto/create-dict.dto';
+import { RequireLogin, RequirePermissions, UserInfo } from '@/common/decorator/custom.decorator';
+import { UpdateDictDataDto, UpdateDictDto } from '@/module/dict/dto/update-dict.dto';
 
 @ApiTags('字典管理')
+@ApiBearerAuth()
 @Controller('dict')
 @RequireLogin()
 export class DictController {

@@ -21,11 +21,7 @@ export class RoleService {
    * @param roleDto 角色参数
    * @param username 用户名
    */
-  private async saveRole(
-    role: Role,
-    roleDto: CreateRoleDto | UpdateRoleDto,
-    username: string,
-  ) {
+  private async saveRole(role: Role, roleDto: CreateRoleDto | UpdateRoleDto, username: string) {
     const connection = this.roleResp.manager.connection;
 
     return await connection.transaction(async (transactionEntityManager) => {
@@ -49,10 +45,7 @@ export class RoleService {
       const res = await transactionEntityManager.save(role);
 
       if (!res) {
-        return Result.fail(
-          role.id ? QUERY_ERROR_CODE : QUERY_ERROR_CODE,
-          role.id ? '更新失败' : '创建失败',
-        );
+        return Result.fail(role.id ? QUERY_ERROR_CODE : QUERY_ERROR_CODE, role.id ? '更新失败' : '创建失败');
       }
       return Result.ok(role.id ? '更新成功' : '创建成功');
     });
@@ -126,15 +119,7 @@ export class RoleService {
    * @param query.endTime 结束时间
    * @returns
    */
-  async getRoleList({
-    roleName,
-    roleCode,
-    isEnable,
-    current = 1,
-    size = 10,
-    startTime,
-    endTime,
-  }: QueryRoleDto) {
+  async getRoleList({ roleName, roleCode, isEnable, current = 1, size = 10, startTime, endTime }: QueryRoleDto) {
     const queryBuilder = this.roleResp.createQueryBuilder('role');
     queryBuilder.select([
       'role.id as id',
@@ -142,6 +127,7 @@ export class RoleService {
       'role.role_code as roleCode',
       'role.is_enable as isEnable',
       'role.sort_order as sortOrder',
+      'role.description as description',
       CREATE_TIME_FORMAT('role'),
     ]);
 
@@ -260,6 +246,7 @@ export class RoleService {
     const roles = await this.roleResp.find({
       where: {
         id: In(roleIds),
+        delFlag: '0',
       },
       relations: ['menus'],
     });
@@ -280,10 +267,7 @@ export class RoleService {
    * @param {string} username
    * @returns
    */
-  async changeRoleStatus(
-    { roleId, isEnable }: ChangeRoleDto,
-    username: string,
-  ) {
+  async changeRoleStatus({ roleId, isEnable }: ChangeRoleDto, username: string) {
     const role = await this.roleResp.findOne({
       where: { id: roleId, delFlag: '0' },
     });
@@ -322,11 +306,7 @@ export class RoleService {
     }
 
     try {
-      await this.roleResp
-        .createQueryBuilder()
-        .relation(Role, 'users')
-        .of(role)
-        .add(userIds);
+      await this.roleResp.createQueryBuilder().relation(Role, 'users').of(role).add(userIds);
       return Result.ok('添加成功');
     } catch (e) {
       return Result.fail(QUERY_ERROR_CODE, '添加失败');
@@ -351,11 +331,7 @@ export class RoleService {
     }
 
     try {
-      await this.roleResp
-        .createQueryBuilder()
-        .relation(Role, 'users')
-        .of(role)
-        .remove(userIds);
+      await this.roleResp.createQueryBuilder().relation(Role, 'users').of(role).remove(userIds);
       return Result.ok('移除成功');
     } catch (e) {
       return Result.fail(QUERY_ERROR_CODE, '移除失败');

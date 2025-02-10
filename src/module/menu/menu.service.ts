@@ -141,7 +141,7 @@ export class MenuService {
       }
       // 将用户菜单列表存入redis
       await this.redisService.set(
-        `${CACHE_KEY.USER_MENU}${md5(`${userId}-${username}`)}`,
+        `${CACHE_KEY.USER_MENU}${md5(`${username}-${userId}`)}`,
         menuTree,
         REDIS_LOGIN_USER_EXPIRE_TIME,
       );
@@ -206,7 +206,7 @@ export class MenuService {
 
   // 获取用户菜单列表
   async getUserMenuListFromRedis(userId: number, username: string) {
-    const key = `${CACHE_KEY.USER_MENU}${md5(`${userId}-${username}`)}`;
+    const key = `${CACHE_KEY.USER_MENU}${md5(`${username}-${userId}`)}`;
     const menuList = await this.redisService.get(key);
     if (menuList) {
       return menuList;

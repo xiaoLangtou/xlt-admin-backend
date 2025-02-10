@@ -6,16 +6,23 @@ export class RedisService {
   @Inject('REDIS_CLIENT')
   private redisClient: RedisClientType;
 
-  async getRedisInfo() {
+  /**
+   * 获取 Redis 服务器信息
+   * @param {string[]} [keys] - 需要获取的信息的键名
+   */
+  async getRedisInfo(keys?: string[]) {
     // 连接到 Redis 服务器
     const rawInfo = await this.redisClient.info();
     // 按行分割字符串
     const lines = rawInfo.split('\r\n');
     const parsedInfo = {};
-    // 遍历每一行并分割键值对
+    // 遍历每一行并分割键值对,并存储到对象中
+    // 如果keys存在，则只返回keys中的数据
     lines.forEach((line) => {
       const [key, value] = line.split(':');
-      parsedInfo[key?.trim()] = value?.trim();
+      if (key && value && (!keys || keys.includes(key))) {
+        parsedInfo[key] = value;
+      }
     });
     return parsedInfo;
   }

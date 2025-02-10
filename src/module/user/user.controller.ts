@@ -1,14 +1,21 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { RequireLogin, RequirePermissions, UserInfo } from '@/common/decorator/custom.decorator';
 import { UserService } from '@/module/user/user.service';
 import { CreateUserDto } from '@/module/user/dto/create-user.dto';
 import { ChangeUserStatusDto, ResetPasswordDto, UpdateUserInfoDto } from '@/module/user/dto/update-info.dto';
-import { BatchRemoveUserDto, QueryUserDto, QueryUserWithRolesDto, RemoveUserDto, RemoveUserRoleDto } from '@/module/user/dto/query-user.dto';
+import {
+  BatchRemoveUserDto,
+  QueryUserDto,
+  QueryUserWithRolesDto,
+  RemoveUserDto,
+  RemoveUserRoleDto,
+} from '@/module/user/dto/query-user.dto';
 
 @ApiTags('用户管理模块')
 @Controller('user')
+@ApiBearerAuth()
 @RequireLogin()
 export class UserController {
   constructor(private readonly userService: UserService) {}

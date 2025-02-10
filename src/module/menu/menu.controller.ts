@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { RequireLogin, RequirePermissions, UserInfo } from '@/common/decorator/custom.decorator';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from '@/module/menu/dto/update-menu.dto';
 
 @ApiTags('菜单管理')
+@ApiBearerAuth()
 @RequireLogin()
 @Controller('menu')
 export class MenuController {
