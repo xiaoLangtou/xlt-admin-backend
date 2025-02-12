@@ -1,14 +1,9 @@
-import {
-  Column,
-  Entity,
-  Index,
-  OneToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 import { CommonEntity } from '@/common/entities/base.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 @Entity({
+  name: 'sys_dict_data',
   comment: '字典数据表',
 })
 export class DictData extends CommonEntity {

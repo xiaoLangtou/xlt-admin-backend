@@ -4,6 +4,7 @@ import { CommonEntity } from '@/common/entities/base.entity';
 import { COMMON_STATUS } from '@/common/enums';
 
 @Entity({
+  name:"sys_logger",
   comment: '日志表',
 })
 export class Logger extends CommonEntity {

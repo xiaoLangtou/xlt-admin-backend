@@ -2,7 +2,7 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { CommonEntity } from '@/common/entities/base.entity';
 
 @Entity({
-  name: 'login_log',
+  name: 'sys_login_log',
   comment: '登录日志',
 })
 export class LoginLog extends CommonEntity {

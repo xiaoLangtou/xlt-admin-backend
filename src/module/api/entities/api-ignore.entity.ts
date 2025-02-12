@@ -2,10 +2,10 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { CommonEntity } from '@/common/entities/base.entity';
 
 @Entity({
-  name: 'sys_api',
-  comment: 'api表',
+  name: 'sys_api_ignore',
+  comment: 'api忽略表',
 })
-export class Api extends CommonEntity {
+export class ApiIgnore extends CommonEntity {
   @PrimaryGeneratedColumn({
     comment: '主键id',
   })
@@ -43,4 +43,12 @@ export class Api extends CommonEntity {
     comment: 'api组',
   })
   apiGroup: string;
+
+
+  @Column({
+    type: 'bool',
+    default: false,
+    comment: '是否忽略',
+  })
+  ignoreFlag: boolean;
 }

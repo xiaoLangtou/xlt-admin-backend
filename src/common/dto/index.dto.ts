@@ -26,3 +26,11 @@ export class CustomDto extends PagerParamsDto {
   @IsOptional()
   endTime?: string;
 }
+
+
+export class CommonIdDto {
+  @ApiPropertyOptional({ description: 'id' })
+  @IsNumberString()
+  id: number;
+
+}

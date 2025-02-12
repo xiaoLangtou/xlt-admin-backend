@@ -1,17 +1,11 @@
-import {
-  Column,
-  Entity,
-  JoinTable,
-  ManyToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { CommonEntity } from '@/common/entities/base.entity';
 import { Menu } from '@/module/menu/entities/menu.entity';
 import { STATUS_ENUM } from '@/common/enums';
 import { User } from '@/module/user/entities/user.entity';
 
 @Entity({
-  name: 'roles',
+  name: 'sys_roles',
 })
 export class Role extends CommonEntity {
   @PrimaryGeneratedColumn({
@@ -56,7 +50,7 @@ export class Role extends CommonEntity {
 
   @ManyToMany(() => Menu)
   @JoinTable({
-    name: 'role_menus',
+    name: 'sys_role_menus',
   })
   menus: Menu[];
 

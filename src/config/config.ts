@@ -11,7 +11,7 @@ const environmentVariable = {
 
 const ENV = process.env.NODE_ENV || 'development';
 
-console.log('当前环境变量：', ENV);
+console.log('当前环境变量：', ENV,process.env.NODE_ENV);
 
 export default () => {
   return yaml.load(

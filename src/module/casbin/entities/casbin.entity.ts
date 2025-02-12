@@ -2,7 +2,7 @@ import { CreateDateColumn, Entity, UpdateDateColumn } from 'typeorm';
 import { CasbinRule } from 'typeorm-adapter';
 
 @Entity({
-  name: 'casbin_rule',
+  name: 'sys_casbin_rule',
   comment: 'casbin规则表',
 })
 export class CasbinRuleEntity extends CasbinRule {

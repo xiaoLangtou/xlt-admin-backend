@@ -3,7 +3,7 @@ import { CommonEntity } from '@/common/entities/base.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
 @Entity({
-  name: 'menu',
+  name: 'sys_menu',
   comment: '菜单权限表',
 })
 export class Menu extends CommonEntity {

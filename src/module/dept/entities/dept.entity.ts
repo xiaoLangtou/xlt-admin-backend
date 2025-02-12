@@ -5,6 +5,7 @@ import { DEPT_TYPE, STATUS_ENUM } from '@/common/enums';
 import { User } from '@/module/user/entities/user.entity';
 
 @Entity({
+  name: 'sys_dept',
   comment: '部门表',
 })
 export class Dept extends CommonEntity {
@@ -84,7 +85,7 @@ export class Dept extends CommonEntity {
 
   @OneToMany(() => User, (user) => user.dept)
   @JoinTable({
-    name: 'user_dept',
+    name: 'sys_user_dept',
     joinColumn: {
       name: 'dept_id',
       referencedColumnName: 'id',

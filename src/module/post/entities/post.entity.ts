@@ -1,10 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinTable,
-  ManyToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { CommonEntity } from '@/common/entities/base.entity';
 import { STATUS_ENUM } from '@/common/enums';
@@ -12,7 +6,7 @@ import { User } from '@/module/user/entities/user.entity';
 import { SORT_ORDER } from '@/common/constant';
 
 @Entity({
-  name: 'post',
+  name: 'sys_post',
   comment: '岗位表',
 })
 export class Post extends CommonEntity {
@@ -63,7 +57,7 @@ export class Post extends CommonEntity {
 
   @ManyToMany(() => User, (user) => user.posts)
   @JoinTable({
-    name: 'user_posts',
+    name: 'sys_user_posts',
     joinColumn: {
       name: 'post_id',
       referencedColumnName: 'id',

@@ -1,8 +1,9 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiService } from './api.service';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequireLogin } from '@/common/decorator/custom.decorator';
 import { QueryApiDto } from '@/module/api/dto/query-api.dto';
+import { CreateApiDto, IgnoreApiDto, UpdateApiDto } from '@/module/api/dto/create-api.dto';
 
 @ApiTags('api管理')
 @ApiBearerAuth()
@@ -56,5 +57,40 @@ export class ApiController {
   @Get('group')
   async getApiGroup() {
     return await this.apiService.getApiGroup();
+  }
+
+
+  @ApiOperation({
+    summary: '新增api',
+  })
+  @Post('add')
+  async createApi(@Body() createApiDto: CreateApiDto) {
+    return await this.apiService.createApi(createApiDto);
+  }
+
+
+  @ApiOperation({
+    summary: '更新api',
+  })
+  @Post('update')
+  async updateApi(@Body() createApiDto: UpdateApiDto) {
+    return await this.apiService.updateApi(createApiDto);
+  }
+
+  @ApiOperation({
+    summary: '忽略api',
+  })
+  @Post('ignore')
+  async ignoreApi(@Body() ignoreApiDto: IgnoreApiDto) {
+    return await this.apiService.ignoreApi(ignoreApiDto);
+  }
+
+
+  @ApiOperation({
+    summary: '批量同步接口',
+  })
+  @Post('batch-apis')
+  async batchApis(@Body() apis: CreateApiDto[]) {
+    return await this.apiService.batchApis(apis);
   }
 }

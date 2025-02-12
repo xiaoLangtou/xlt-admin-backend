@@ -30,7 +30,6 @@ export class AxiosService {
       });
       return response.data.addr;
     } catch (error) {
-      console.error(error);
       return '未知';
     }
   }

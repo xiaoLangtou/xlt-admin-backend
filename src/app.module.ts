@@ -91,7 +91,7 @@ import { SwaggerSyncModule } from './module/swagger-sync/swagger-sync.module';
               winston.format.timestamp(),
               winston.format.printf((logs) => {
                 const { timestamp, level, message } = logs;
-                return `[${timestamp}] [${level}]: ${message.replace(/\u001b\[[0-9;]*m/g, '')}\r\n`;
+                return `[${timestamp}] [${level}]: ${(message as string).replace(/\u001b\[[0-9;]*m/g, '')}\r\n`;
               }),
             ),
           }),
@@ -101,7 +101,7 @@ import { SwaggerSyncModule } from './module/swagger-sync/swagger-sync.module';
               winston.format.timestamp(),
               winston.format.printf((logs) => {
                 const { timestamp, level, message, stack } = logs;
-                return `[${timestamp}] [${level}]: ${message.replace(/\u001b\[[0-9;]*m/g, '')}\r\n[stack]: ${JSON.stringify(stack)}\r\n`;
+                return `[${timestamp}] [${level}]: ${(message as string).replace(/\u001b\[[0-9;]*m/g, '')}\r\n[stack]: ${JSON.stringify(stack)}\r\n`;
               }),
             ),
           }),

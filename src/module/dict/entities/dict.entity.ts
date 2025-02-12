@@ -4,6 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { DICT_SYSTEM_FLAG } from '@/common/enums';
 
 @Entity({
+  name: 'sys_dict',
   comment: '字典表',
 })
 export class Dict extends CommonEntity {

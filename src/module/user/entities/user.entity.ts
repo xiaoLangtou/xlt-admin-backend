@@ -1,11 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { USER_IS_ADMIN, USER_IS_FROZEN } from '@/common/enums';
 import { CommonEntity } from '@/common/entities/base.entity';
 import { Post } from '@/module/post/entities/post.entity';
@@ -13,7 +6,7 @@ import { Dept } from '@/module/dept/entities/dept.entity';
 import { Role } from '@/module/role/entities/role.entity';
 
 @Entity({
-  name: 'users',
+  name: 'sys_users',
 })
 export class User extends CommonEntity {
   @PrimaryGeneratedColumn({
@@ -107,7 +100,7 @@ export class User extends CommonEntity {
 
   @ManyToMany(() => Role, (role) => role.users)
   @JoinTable({
-    name: 'user_roles', // 中间表的表名
+    name: 'sys_user_roles', // 中间表的表名
     joinColumn: { name: 'user_id', referencedColumnName: 'id' }, // 指定 user_id
     inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' }, // 指定 role_id
   })
