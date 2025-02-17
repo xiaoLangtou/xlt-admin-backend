@@ -93,4 +93,15 @@ export class ApiController {
   async batchApis(@Body() apis: CreateApiDto[]) {
     return await this.apiService.batchApis(apis);
   }
+
+
+  @ApiOperation({
+    summary: '获取所有的api',
+  })
+  @Get('all')
+  async getAllApis() {
+    return await this.apiService.getAllApis();
+  }
+
 }
+

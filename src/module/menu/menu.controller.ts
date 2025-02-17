@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { MenuService } from './menu.service';
-import { RequireLogin, RequirePermissions, UserInfo } from '@/common/decorator/custom.decorator';
+import { RequireLogin, UserInfo } from '@/common/decorator/custom.decorator';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from '@/module/menu/dto/update-menu.dto';
@@ -20,7 +20,7 @@ export class MenuController {
     type: String,
     required: false,
   })
-  @RequirePermissions('admin:menu:list')
+
   @Get('/tree')
   async findMenuTree(@Query('name') name: string) {
     return await this.menuService.getMenuTreeList(name);
@@ -30,7 +30,7 @@ export class MenuController {
     summary: '创建菜单',
   })
   @ApiBody({ type: CreateMenuDto, required: true })
-  @RequirePermissions('admin:menu:add')
+
   @Post('/create')
   async createMenu(@UserInfo('username') username: string, @Body() menuDto: CreateMenuDto) {
     return await this.menuService.createMenuItem(menuDto, username);
@@ -44,7 +44,7 @@ export class MenuController {
     type: Number,
     required: true,
   })
-  @RequirePermissions('admin:menu:delete')
+
   @Delete('/delete/:menuId')
   async deleteMenu(@Param('menuId') menuId: number, @UserInfo('username') username: string) {
     return await this.menuService.deleteMenuItem(menuId, username);
@@ -58,7 +58,7 @@ export class MenuController {
     type: Number,
     required: true,
   })
-  @RequirePermissions('admin:menu:detail')
+
   @Get('/detail/:menuId')
   async getMenuDetail(@Param('menuId') menuId: number) {
     return await this.menuService.getMenuItemDetail(menuId);
@@ -68,7 +68,7 @@ export class MenuController {
     summary: '更新菜单',
   })
   @ApiBody({ type: UpdateMenuDto, required: true })
-  @RequirePermissions('admin:menu:edit')
+
   @Post('/update')
   async updateMenu(@UserInfo('username') username: string, @Body() menuDto: UpdateMenuDto) {
     return await this.menuService.updateMenuItem(menuDto, username);

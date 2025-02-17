@@ -1,40 +1,44 @@
 import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
-import { Observable } from 'rxjs';
 import { Reflector } from '@nestjs/core';
+import { CasbinService } from '@/module/casbin/casbin.service';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
   @Inject()
   private reflector: Reflector;
 
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
+  @Inject(CasbinService)
+  private readonly casbinService: CasbinService;
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     // 获取当前请求的用户信息
     if (!request.user) {
       return true;
     }
+    const { user } = request;
     const userPermissions = request.user.permissions;
-
-    // 获取当前请求的权限 metadata
-    const requirePermissions = this.reflector.getAllAndOverride<string[]>('requirePermissions', [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (!requirePermissions) {
-      return true;
+    if (!user.roles || user.roles.length <= 0) {
+      throw new UnauthorizedException('当前用户未设置角色，请联系管理员！');
     }
 
-    // 判断当前用户是否有权限
-    if (userPermissions.includes('*:*:*')) {
-      return true;
-    }
-
-    const hasPermission = requirePermissions.every((permission) => userPermissions.some((item) => item === permission));
-
+    // 获取请求路径和请求方法
+    const { path, method } = request;
+    console.log(path, method);
+    const hasPermission = await this.hasRolePermission(user.roles, [path, method]);
     if (!hasPermission) {
-      throw new UnauthorizedException('用户无权限');
+      throw new UnauthorizedException('用户权限不足');
     }
 
     return true;
+  }
+
+  async hasRolePermission(roles: any, permissions: string[]) {
+    const results = await Promise.all(
+      roles.map((role: any) => this.casbinService.hasPermissionForUser(role.code, permissions)),
+    );
+    console.log(results)
+    // 只要有一个角色有权限，就返回 true
+    return results.some((result: any) => result);
   }
 }

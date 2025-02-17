@@ -1,0 +1,3 @@
+INSERT INTO meeting_room_booking_system.sys_casbin_rule (id, ptype, v0, v1, v2, v3, v4, v5, v6, created_date, updated_date) VALUES (1, 'p', 'bob', 'data1', 'read', null, null, null, null, '2024-09-28 00:48:24.754667', '2024-09-28 00:48:24.754667');
+INSERT INTO meeting_room_booking_system.sys_casbin_rule (id, ptype, v0, v1, v2, v3, v4, v5, v6, created_date, updated_date) VALUES (2, 'p', 'bob', 'data2', 'write', null, null, null, null, '2024-09-28 00:48:24.763943', '2024-09-28 00:48:24.763943');
+INSERT INTO meeting_room_booking_system.sys_casbin_rule (id, ptype, v0, v1, v2, v3, v4, v5, v6, created_date, updated_date) VALUES (3, 'p', 'admin', '/hello', 'GET', null, null, null, null, '2024-09-28 15:56:54.847000', '2024-09-28 15:56:54.847000');

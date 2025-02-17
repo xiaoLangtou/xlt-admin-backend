@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/
 import { DeptService } from './dept.service';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateDeptDto } from '@/module/dept/dto/create-dept.dto';
-import { RequireLogin, RequirePermissions, UserInfo } from '@/common/decorator/custom.decorator';
+import { RequireLogin, UserInfo } from '@/common/decorator/custom.decorator';
 import { UpdateDeptDto } from '@/module/dept/dto/update-dept.dto';
 import { ChangeDeptDto, QueryDeptDto } from '@/module/dept/dto/query-dept.dto';
 
@@ -19,7 +19,7 @@ export class DeptController {
     required: true,
     type: CreateDeptDto,
   })
-  @RequirePermissions('admin:dept:add')
+
   @Post('add')
   create(
     @Body() createDeptDto: CreateDeptDto,
@@ -33,7 +33,7 @@ export class DeptController {
     required: true,
     type: UpdateDeptDto,
   })
-  @RequirePermissions('admin:dept:edit')
+
   @Post('edit')
   update(
     @Body() updateDeptDto: UpdateDeptDto,
@@ -48,7 +48,7 @@ export class DeptController {
     name: 'deptId',
     type: Number,
   })
-  @RequirePermissions('admin:dept:remove')
+
   @Delete('remove/:deptId')
   delete(
     @Param('deptId') deptId: number,
@@ -62,14 +62,14 @@ export class DeptController {
     required: false,
     type: QueryDeptDto,
   })
-  @RequirePermissions('admin:dept:list')
+
   @Get('list')
   query(@Query() queryDeptDto: QueryDeptDto): any {
     return this.deptService.findAll(queryDeptDto);
   }
 
   @ApiOperation({ summary: '查询部门树' })
-  @RequirePermissions('admin:dept:tree')
+
   @Get('tree')
   queryTree(): any {
     return this.deptService.findDeptTree();
@@ -81,7 +81,7 @@ export class DeptController {
     name: 'deptId',
     type: Number,
   })
-  @RequirePermissions('admin:dept:detail')
+
   @Get('detail/:deptId')
   detail(@Param('deptId') deptId: number): any {
     return this.deptService.findOne(deptId);
@@ -92,7 +92,7 @@ export class DeptController {
     required: true,
     type: ChangeDeptDto,
   })
-  @RequirePermissions('admin:dept:change:status')
+
   @Put('change-status')
   changeStatus(
     @Body() changeDeptDto: ChangeDeptDto,
@@ -106,7 +106,7 @@ export class DeptController {
   }
 
   @ApiOperation({ summary: '生成部门代码和排序值' })
-  @RequirePermissions('admin:dept:generate')
+
   @Get('generate-dept-constants')
   async generateDeptConstants(): Promise<any> {
     return await this.deptService.createDeptConstant();

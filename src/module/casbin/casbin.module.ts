@@ -5,6 +5,7 @@ import TypeORMAdapter from 'typeorm-adapter';
 import { newEnforcer } from 'casbin';
 import { CasbinRuleEntity } from '@/module/casbin/entities/casbin.entity';
 import { join } from 'path';
+import { CasbinController } from './casbin.controller';
 
 @Global()
 @Module({
@@ -33,5 +34,6 @@ import { join } from 'path';
     },
   ],
   exports: [CasbinService],
+  controllers: [CasbinController],
 })
 export class CasbinModule {}

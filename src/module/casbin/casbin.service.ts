@@ -87,13 +87,19 @@ export class CasbinService {
    * @param {string[][]} permissions 权限
    */
   async addPermissionsForUser(username: string, permissions: string[][]): Promise<boolean> {
-    permissions.map(async (permission) => {
-      if (permission.length === 0) {
-        return false;
-      }
-      await this.enforcer.addPermissionForUser(username, ...permission);
-    });
-    return true;
+    try {
+      permissions.map(async (permission) => {
+        if (permission.length === 0) {
+          return false;
+        }
+        await this.enforcer.addPermissionForUser(username, ...permission);
+      });
+      return true;
+    }catch (e) {
+
+    }
+
+
   }
 
   /**
@@ -132,6 +138,6 @@ export class CasbinService {
    * 校验用户或角色是否拥有某个权限
    */
   async hasPermissionForUser(username: string, permission: string[]): Promise<boolean> {
-    return await this.enforcer.hasPermissionForUser(username, ...permission);
+    return await this.enforcer.enforce(username, ...permission);
   }
 }

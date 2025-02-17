@@ -11,6 +11,7 @@ import { getPagination } from '@/common/utils/utils';
 import { SwaggerSyncService } from '@/module/swagger-sync/swagger-sync.service';
 import { ApiIgnore } from '@/module/api/entities/api-ignore.entity';
 import { CreateApiDto, IgnoreApiDto, UpdateApiDto } from '@/module/api/dto/create-api.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ApiService {
@@ -25,6 +26,9 @@ export class ApiService {
 
   @Inject(SwaggerSyncService)
   private readonly swaggerSyncService: SwaggerSyncService;
+
+  @Inject(ConfigService)
+  private readonly configService: ConfigService;
 
 
   async synchronousApi() {
@@ -296,6 +300,39 @@ export class ApiService {
 
     if (!createResult.ok) return Result.fail(QUERY_ERROR_CODE, '批量创建失败');
     return Result.ok('批量创建成功');
+  }
+
+
+  async getAllApis() {
+    const result = await to(this.apiRepository.createQueryBuilder('api')
+      .select(['api.id as id', 'api.path as path', 'api.method as method', 'api.api_group as apiGroup', 'api.description as description'])
+      .where('api.del_flag = :delFlag', { delFlag: '0' })
+      .getRawMany(),
+    );
+    if (!result.ok) return Result.fail(QUERY_ERROR_CODE, '查询失败');
+    // 获取已经忽略的接口
+    const ignoreResult = await to(this.apiIgnoreRepository.createQueryBuilder('api')
+      .select(['api.path as path', 'api.method as method'])
+      .where('api.del_flag = :delFlag', { delFlag: '0' })
+      .getRawMany(),
+    );
+
+    if (!ignoreResult.ok) return Result.fail(QUERY_ERROR_CODE, '查询失败');
+    // 过滤掉已经忽略的接口
+    const apis = result.value.filter((item) => {
+      return !ignoreResult.value.some((ignoreItem) => {
+        return ignoreItem.path === item.path && ignoreItem.method === item.method;
+      });
+    });
+
+    // 给接口添加必选的字段
+    const requiredApis = this.configService.get('auth-required');
+    apis.forEach((item) => {
+      item.required = requiredApis.whitelist.includes(item.path);
+    });
+
+
+    return Result.ok(apis);
   }
 
 }

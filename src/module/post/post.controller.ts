@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { PostService } from './post.service';
-import { RequireLogin, RequirePermissions, UserInfo } from '@/common/decorator/custom.decorator';
+import { RequireLogin, UserInfo } from '@/common/decorator/custom.decorator';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreatePostDto } from '@/module/post/dto/create-post.dto';
 import { UpdatePostDto } from '@/module/post/dto/update-post.dto';
@@ -20,7 +20,7 @@ export class PostController {
     type: CreatePostDto,
     required: true,
   })
-  @RequirePermissions('admin:post:add')
+
   @Post('add')
   create(
     @Body() createPostDto: CreatePostDto,
@@ -36,7 +36,7 @@ export class PostController {
     type: UpdatePostDto,
     required: true,
   })
-  @RequirePermissions('admin:post:edit')
+
   @Post('edit')
   updatePost(
     @Body() updatePostDto: UpdatePostDto,
@@ -51,7 +51,7 @@ export class PostController {
     required: true,
     description: '岗位ID',
   })
-  @RequirePermissions('admin:post:delete')
+
   @Delete('remove/:id')
   deletePost(@Param('id') id: number, @UserInfo('username') username: string) {
     return this.postService.delete(id, username);
@@ -67,7 +67,7 @@ export class PostController {
     type: ChangeStatusDto,
     required: true,
   })
-  @RequirePermissions('admin:post:status')
+
   @Put('status/')
   changeStatus(
     @Body() changeStatusDto: ChangeStatusDto,
@@ -85,7 +85,7 @@ export class PostController {
     type: QueryPostDto,
     required: false,
   })
-  @RequirePermissions('admin:post:list')
+
   @Get('list')
   findAll(@Query() query: QueryPostDto) {
     return this.postService.findAll(query);
@@ -97,7 +97,7 @@ export class PostController {
     required: true,
     description: '岗位ID',
   })
-  @RequirePermissions('admin:post:detail')
+
   @Get('detail/:id')
   findOne(@Param('id') id: number) {
     return this.postService.findPostById(id);

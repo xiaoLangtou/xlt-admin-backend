@@ -1,0 +1,16 @@
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (1, 1);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (1, 4);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (16, 4);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (17, 1);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (17, 2);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (17, 3);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (21, 3);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (22, 3);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (23, 3);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (24, 3);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (25, 3);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (29, 1);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (29, 2);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (29, 4);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (31, 1);
+INSERT INTO meeting_room_booking_system.sys_user_roles (user_id, role_id) VALUES (31, 4);

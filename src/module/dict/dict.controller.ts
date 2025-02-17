@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/commo
 import { DictService } from './dict.service';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateDictDataDto, CreateDictDto } from '@/module/dict/dto/create-dict.dto';
-import { RequireLogin, RequirePermissions, UserInfo } from '@/common/decorator/custom.decorator';
+import { RequireLogin, UserInfo } from '@/common/decorator/custom.decorator';
 import { UpdateDictDataDto, UpdateDictDto } from '@/module/dict/dto/update-dict.dto';
 
 @ApiTags('字典管理')
@@ -20,7 +20,7 @@ export class DictController {
     type: CreateDictDto,
   })
   @Post('add')
-  @RequirePermissions('system:dict:add')
+
   async createDict(
     @Body() createDictDto: CreateDictDto,
     @UserInfo('username') username: string,
@@ -35,7 +35,7 @@ export class DictController {
     required: true,
     type: UpdateDictDto,
   })
-  @RequirePermissions('system:dict:edit')
+
   @Post('update')
   async updateDict(
     @Body() updateDictDto: UpdateDictDto,
@@ -52,7 +52,7 @@ export class DictController {
     name: 'id',
     type: Number,
   })
-  @RequirePermissions('system:dict:remove')
+
   @Delete('remove/:id')
   async removeDict(@Param('id') id: number): Promise<any> {
     return this.dictService.deleteDictType(id);
@@ -66,7 +66,7 @@ export class DictController {
     name: 'name',
     type: String,
   })
-  @RequirePermissions('system:dict:list')
+
   @Get('list')
   async getList(@Query('name') dictName: string): Promise<any> {
     return this.dictService.findDictTypeList(dictName);
@@ -80,7 +80,7 @@ export class DictController {
     name: 'id',
     type: Number,
   })
-  @RequirePermissions('system:dict:detail')
+
   @Get('detail/:id')
   async getDictTypeDetail(@Param('id') id: number): Promise<any> {
     return this.dictService.findDictTypeById(id);
@@ -104,7 +104,7 @@ export class DictController {
     name: 'size',
     type: Number,
   })
-  @RequirePermissions('system:dict:data:list')
+
   @Get('data/list')
   async getDictDataList(
     @Query('typeId') dictTypeId: number,
@@ -121,7 +121,7 @@ export class DictController {
     required: true,
     type: CreateDictDataDto,
   })
-  @RequirePermissions('system:dict:data:add')
+
   @Post('data/add')
   async createDictData(
     @Body() createDictDataDto: CreateDictDataDto,
@@ -137,7 +137,7 @@ export class DictController {
     required: true,
     type: UpdateDictDataDto,
   })
-  @RequirePermissions('system:dict:data:edit')
+
   @Post('data/update')
   async updateDictData(
     @Body() dictDataDto: UpdateDictDataDto,
@@ -154,7 +154,7 @@ export class DictController {
     name: 'id',
     type: Number,
   })
-  @RequirePermissions('system:dict:data:remove')
+
   @Delete('data/remove/:id')
   async removeDictData(
     @Param('id') id: number,
@@ -171,7 +171,7 @@ export class DictController {
     name: 'id',
     type: Number,
   })
-  @RequirePermissions('system:dict:data:detail')
+
   @Get('data/detail/:id')
   async getDictDataDetail(@Param('id') id: number): Promise<any> {
     return this.dictService.findDictDataDetailById(id);
@@ -185,7 +185,7 @@ export class DictController {
     name: 'type',
     type: String,
   })
-  @RequirePermissions('system:dict:data:detail:list')
+
   @Get('data/type-detail/:type')
   async getDictDataDetailByType(@Param('type') type: string): Promise<any> {
     return this.dictService.findDictDataDetailByType(type);
@@ -199,7 +199,7 @@ export class DictController {
     name: 'type',
     type: String,
   })
-  @RequirePermissions('system:dict:data:detail:object')
+
   @Get('data/type-detail')
   async getDictDataObjByType(@Query('type') type: string): Promise<any> {
     return this.dictService.findDictDataAsObjectByType(type);
