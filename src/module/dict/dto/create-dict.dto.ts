@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsNumberString, IsOptional, IsString, Length, Matches } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, Length, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { DICT_SYSTEM_FLAG } from '@/common/enums';
 
@@ -38,7 +38,6 @@ export class CreateDictDataDto {
   dictLabel: string;
 
   @ApiProperty({ required: false, description: '字典描述' })
-  @IsNotEmpty({ message: '字典描述不能为空' })
   dictDesc: string;
 
   @ApiProperty({ required: false, description: '字典备注' })
@@ -48,7 +47,7 @@ export class CreateDictDataDto {
 
   @ApiProperty({ required: false, description: '字典排序' })
   @IsOptional()
-  @IsNumberString({}, { message: '字典排序必须为数字' })
+  @IsNotEmpty({ message: '字典排序不能为空' })
   dictSort: number;
 
   @ApiProperty({ required: true, description: '字典类型ID' })

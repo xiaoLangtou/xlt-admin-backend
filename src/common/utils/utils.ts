@@ -35,36 +35,35 @@ export function getPagination(count: number, current: number, pageSize: number) 
   };
 }
 
-export function arrayToTree<T extends { id: any; parentId: any; children?: T[] }>(
+
+export function arrayToTree<T extends { id: any; parentId: any }>(
   items: T[],
   rootId: number = -1,
 ): T[] {
-  if (!items || items.length <= 0) return [];
-  if (items.length <= 1) {
-    // 处理数组只有一个元素的情况，如果它没有父元素或者父元素匹配rootId，则返回它
-    return items.length === 1 && (items[0].parentId == rootId || items[0].parentId === -1)
-      ? [{ ...items[0], children: [] }]
-      : [];
+  if (!items || items.length === 0) return [];
+  if (items.length === 1 && (items[0].parentId === rootId || items[0].parentId === -1)) {
+    return [items[0]];
   }
 
-  const map = new Map<number, T>();
+  const map = new Map<number, T & { children?: T[] }>();
   const roots: T[] = [];
 
-  // Step 1: 用所有节点初始化映射。
+  // 初始化映射，先复制对象以避免修改原数组
+  items.forEach((item) => map.set(item.id, { ...item }));
+
+  // 构建树形结构
   items.forEach((item) => {
-    map.set(item.id, { ...item, children: [] });
-  });
-  // Step 2: 构建树形结构。
-  items.forEach((item) => {
-    const node = map.get(item.id);
-    if (item.parentId == rootId) {
-      roots.push(node!); //如果parentId匹配rootId，它就是根节点
+    const node = map.get(item.id)!;
+    if (item.parentId === rootId) {
+      roots.push(node);
     } else {
-      const parent = map.get(item.parentId!);
+      const parent = map.get(item.parentId);
       if (parent) {
-        parent.children!.push(node!); // 将节点作为子节点添加到其父节点
+        if (!parent.children) parent.children = [];
+        parent.children.push(node);
       }
     }
   });
+
   return roots;
 }

@@ -170,7 +170,11 @@ export class AuthService {
 
     await this.recordLoginLog({ ...clientInfo, msg: '登录成功', status: 1 }, user);
 
-    return Result.ok({ accessToken: userVo.accessToken, refreshToken: userVo.refreshToken }, '登录成功');
+    return Result.ok({
+      accessToken: userVo.accessToken,
+      refreshToken: userVo.refreshToken,
+      userInfo: userVo.userInfo,
+    }, '登录成功');
   }
 
   /**

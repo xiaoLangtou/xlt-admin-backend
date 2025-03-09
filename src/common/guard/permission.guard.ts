@@ -17,15 +17,16 @@ export class PermissionGuard implements CanActivate {
       return true;
     }
     const { user } = request;
-    const userPermissions = request.user.permissions;
     if (!user.roles || user.roles.length <= 0) {
       throw new UnauthorizedException('当前用户未设置角色，请联系管理员！');
     }
 
     // 获取请求路径和请求方法
     const { path, method } = request;
-    console.log(path, method);
     const hasPermission = await this.hasRolePermission(user.roles, [path, method]);
+
+    // 把忽略的权限给用户
+
     if (!hasPermission) {
       throw new UnauthorizedException('用户权限不足');
     }

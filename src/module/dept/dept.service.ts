@@ -162,17 +162,26 @@ export class DeptService {
       // 当前pid是否存在子节点
       const isChildren = uniqueList.some((item) => item.parentId == pid);
 
-      const treeList = pid
-        ? [
-            {
-              ...uniqueList.find((item) => item.id == pid),
-              children: isChildren ? arrayToTree(uniqueList, pid) : [],
-            },
-          ]
-        : arrayToTree(uniqueList);
+      let treeList: any[] = [];
+
+      if (pid) {
+        const parentItem = uniqueList.find((item) => item.id === pid);
+        if (parentItem) {
+          const _tree = { ...parentItem };
+          if (isChildren) {
+            _tree.children = arrayToTree(uniqueList, pid);
+          }
+          treeList = [_tree];
+        }
+      } else {
+        treeList = arrayToTree(uniqueList);
+      }
+
+
 
       return Result.ok({ records: treeList });
     } catch (e) {
+      console.log('查询失败', e);
       return Result.fail(QUERY_ERROR_CODE, '查询失败');
     }
   }
@@ -190,7 +199,7 @@ export class DeptService {
       const treeList = list.length >= 0 ? arrayToTree<Dept>(list, -1) : [];
       return Result.ok(treeList);
     } catch (e) {
-      console.log(e);
+      console.log('查询失败', e);
       return Result.fail(QUERY_ERROR_CODE, '查询失败');
     }
   }
