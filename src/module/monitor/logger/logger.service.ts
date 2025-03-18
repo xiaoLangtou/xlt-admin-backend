@@ -42,17 +42,6 @@ export class LoggerService {
     // 处理请求的状态
     const status = response.statusCode;
 
-    console.log(
-      status,
-      data.code,
-      status !== 200
-        ? COMMON_STATUS.FAIL
-        : status == 200 && data.code == 0
-          ? COMMON_STATUS.SUCCESS
-          : COMMON_STATUS.FAIL,
-      'status !== 200',
-    );
-
     const loggerParams: CreateLoggerDto = {
       browser: userAgent.toAgent(),
       logContent: moduleFunc ? moduleFunc : '',

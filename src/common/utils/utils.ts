@@ -35,35 +35,52 @@ export function getPagination(count: number, current: number, pageSize: number) 
   };
 }
 
-
-export function arrayToTree<T extends { id: any; parentId: any }>(
+export function arrayToTree<T extends { id: any; parentId: any; children?: T[] }>(
   items: T[],
   rootId: number = -1,
 ): T[] {
-  if (!items || items.length === 0) return [];
-  if (items.length === 1 && (items[0].parentId === rootId || items[0].parentId === -1)) {
-    return [items[0]];
+  if (!items || items.length <= 0) return [];
+  if (items.length <= 1) {
+    // 处理数组只有一个元素的情况，如果它没有父元素或者父元素匹配rootId，则返回它
+    return items.length === 1 && (items[0].parentId == rootId || items[0].parentId === -1)
+      ? [{ ...items[0], children: [] }]
+      : [];
   }
 
-  const map = new Map<number, T & { children?: T[] }>();
+  const map = new Map<number, T>();
   const roots: T[] = [];
 
-  // 初始化映射，先复制对象以避免修改原数组
-  items.forEach((item) => map.set(item.id, { ...item }));
-
-  // 构建树形结构
+  // Step 1: 用所有节点初始化映射。
   items.forEach((item) => {
-    const node = map.get(item.id)!;
-    if (item.parentId === rootId) {
-      roots.push(node);
+    map.set(item.id, { ...item });
+  });
+
+  // Step 2: 构建树形结构。
+  items.forEach((item) => {
+    const node = map.get(item.id);
+    if (item.parentId == rootId) {
+      roots.push(node!); // 如果parentId匹配rootId，它就是根节点
     } else {
-      const parent = map.get(item.parentId);
+      const parent = map.get(item.parentId!);
       if (parent) {
-        if (!parent.children) parent.children = [];
-        parent.children.push(node);
+        if (!parent.children) parent.children = []; // 初始化子节点数组
+        parent.children.push(node!); // 将节点作为子节点添加到其父节点
       }
     }
   });
 
+  // Step 3: 移除没有子节点的节点的children属性
+  const removeEmptyChildren = (nodes: T[]) => {
+    nodes.forEach((node) => {
+      if (node.children && node.children.length === 0) {
+        delete node.children; // 删除空的children属性
+      }
+      if (node.children) {
+        removeEmptyChildren(node.children); // 递归处理子节点
+      }
+    });
+  };
+
+  removeEmptyChildren(roots); // 移除根节点中的空children属性
   return roots;
 }

@@ -21,6 +21,11 @@ export class PermissionGuard implements CanActivate {
       throw new UnauthorizedException('当前用户未设置角色，请联系管理员！');
     }
 
+
+    const isExistSystemRole = user.roles.some((role: any) => role.isSystemRole === true);
+    if (isExistSystemRole) return true;
+
+
     // 获取请求路径和请求方法
     const { path, method } = request;
     const hasPermission = await this.hasRolePermission(user.roles, [path, method]);
@@ -38,7 +43,7 @@ export class PermissionGuard implements CanActivate {
     const results = await Promise.all(
       roles.map((role: any) => this.casbinService.hasPermissionForUser(role.code, permissions)),
     );
-    console.log(results)
+    console.log(results);
     // 只要有一个角色有权限，就返回 true
     return results.some((result: any) => result);
   }

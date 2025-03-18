@@ -103,7 +103,6 @@ export class RoleController {
 
   @ApiOperation({ summary: '移除角色用户' })
   @ApiBody({ required: true, type: UsersToRoleDto })
-
   @Put('remove/users')
   removeUsersToRole(@Body() usersToRoleDto: UsersToRoleDto) {
     return this.roleService.removeUsersFromRole(usersToRoleDto.roleId, usersToRoleDto.users);

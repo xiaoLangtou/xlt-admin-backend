@@ -91,6 +91,14 @@ export class User extends CommonEntity {
   })
   jobNumber: string;
 
+  @Column({
+    comment: '是否为系统用户，1：系统用户；0非系统用户',
+    name: 'is_system_user',
+    type: 'boolean',
+    default: false,
+  })
+  isSystemUser: boolean;
+
   // 岗位
   @ManyToMany(() => Post, (post) => post.users)
   posts: Post[];

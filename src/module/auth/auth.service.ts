@@ -254,7 +254,7 @@ export class AuthService {
       email: userInfo.email,
       nickname: userInfo.nickname,
       roles: userInfo.roles.map((role) => {
-        return { id: role.id, name: role.name, code: role.roleCode };
+        return { id: role.id, name: role.name, code: role.roleCode, isSystemRole: role.isSystemRole };
       }),
       isFrozen: userInfo.isFrozen,
       headPic: userInfo.headPic,
@@ -294,8 +294,8 @@ export class AuthService {
 
   /**
    * 退出登录
-   * @param userDto
    * @param id
+   * @param clientInfo
    */
   async logout(id: number, clientInfo: any) {
     //根据id获取用户信息

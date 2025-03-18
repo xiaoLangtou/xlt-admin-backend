@@ -48,6 +48,15 @@ export class Role extends CommonEntity {
   })
   sortOrder: number;
 
+  @Column({
+    comment: '是否系统角色',
+    name: 'is_system_role',
+    type: 'boolean',
+    default: false,
+  })
+  isSystemRole: boolean;
+
+
   @ManyToMany(() => Menu)
   @JoinTable({
     name: 'sys_role_menus',

@@ -41,6 +41,15 @@ export class CasbinController {
       return [api.path, api.method];
     });
 
+    // 先删除所有的权限
+    const roleAllPermission = await this.casbinService.getPermissionsForUser(roleCode);
+
+    const deletePermission = roleAllPermission.filter(item => !apis.find(api => api.path === item[1] && api.method === item[2])).map(item => {
+      return [item[1], item[2]];
+    });
+
+    await this.casbinService.deletePermissionsForUser(roleCode, deletePermission);
+
     const result = await this.casbinService.addPermissionsForUser(roleCode, permission);
 
     return Result.ok(result);

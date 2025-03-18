@@ -59,6 +59,11 @@ export class RoleService {
   async createRole(createRoleDto: CreateRoleDto, username: string) {
     const role = new Role();
     role.createBy = username;
+
+    if (!createRoleDto.roleCode) {
+      createRoleDto.roleCode = await this.generateUniqueRoleCode();
+    }
+
     return this.saveRole(role, createRoleDto, username);
   }
 
@@ -87,17 +92,27 @@ export class RoleService {
 
   async deleteRole(id: number, username: string) {
     const role = await this.roleResp.findOne({
-      where: { id, delFlag: '0' },
+      where: {
+        id: id,
+        delFlag: '0',
+      },
+      relations: ['users'],
     });
-
     if (!role) {
       return Result.fail(20002, '角色不存在');
     }
 
-    // todo 如果角色下有用户，不允许删除，提示角色下有用户，不允许删除
+    if (role.isSystemRole) {
+      return Result.fail(20003, '系统角色不允许删除');
+    }
 
+    if (role.users.length > 0) {
+      return Result.fail(20004, '该角色下有用户，不允许删除');
+    }
+    
     role.delFlag = '1';
-    role.updateBy = username;
+    role.deleteTime = new Date();
+    role.deleteBy = username;
 
     try {
       await this.roleResp.save(role);
@@ -128,6 +143,7 @@ export class RoleService {
       'role.is_enable as isEnable',
       'role.sort_order as sortOrder',
       'role.description as description',
+      'role.is_system_role as isSystemRoe',
       CREATE_TIME_FORMAT('role'),
     ]);
 
@@ -156,7 +172,7 @@ export class RoleService {
     }
 
     queryBuilder.andWhere('role.delFlag = :delFlag', { delFlag: '0' });
-    queryBuilder.andWhere("role.roleCode != 'SUPER_ADMIN'");
+    queryBuilder.andWhere('role.roleCode != \'SUPER_ADMIN\'');
 
     const total = await queryBuilder.getCount();
 
@@ -165,7 +181,8 @@ export class RoleService {
     const list = await queryBuilder
       .skip(pager.startRow)
       .take(pager.pageInfo.pageSize)
-      .orderBy('role.sortOrder', 'DESC')
+      .orderBy('role.sort_order', 'DESC')
+      .orderBy('role.is_system_role', 'DESC')
       .getRawMany();
 
     return Result.ok({
@@ -357,4 +374,41 @@ export class RoleService {
     }, []);
     return Uniq(menus.map((menu) => menu.permission)).filter((item) => item);
   }
+
+
+  /**
+   * 生成一个随机的角色编码并确保不重复
+   * @param prefix 编码前缀 (可选)
+   * @param length 编码长度 (默认为6)
+   * @returns 生成的唯一角色编码
+   */
+  async generateUniqueRoleCode(prefix = 'ROLE_', length = 6): Promise<string> {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZqwertyuiopasdfghjklzxcvbnm0123456789';
+    let isUnique = false;
+    let roleCode = '';
+
+    while (!isUnique) {
+      // 生成随机编码
+      let randomCode = '';
+      for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        randomCode += characters.charAt(randomIndex);
+      }
+
+      roleCode = `${prefix}${randomCode}`;
+
+      // 检查数据库中是否已存在该编码
+      const existingRole = await this.roleResp.findOne({
+        where: { roleCode: roleCode },
+      });
+
+      if (!existingRole) {
+        isUnique = true;
+      }
+    }
+
+    return roleCode;
+  }
+
+
 }

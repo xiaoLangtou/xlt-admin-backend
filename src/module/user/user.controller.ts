@@ -70,7 +70,6 @@ export class UserController {
 
   @ApiOperation({ summary: '根据角色ID获取用户' })
   @ApiQuery({ type: QueryUserWithRolesDto, description: '角色id' })
-
   @Get('role/list')
   async getUserByRId(@Query() query: QueryUserWithRolesDto) {
     return this.userService.getUserListByRoleId(query);
@@ -99,4 +98,14 @@ export class UserController {
   async batchDelete(@Body() removeUserDto: BatchRemoveUserDto, @UserInfo('username') username: string) {
     return this.userService.batchDelete(removeUserDto.ids, username);
   }
+
+
+
+  @ApiOperation({ summary: '获取非当前角色下的用户' })
+  @ApiQuery({ type: QueryUserWithRolesDto, description: '角色id' })
+  @Get('role/not/list')
+  async getUserNotByRId(@Query() query: QueryUserWithRolesDto) {
+    return this.userService.getUserNotListByRoleId(query);
+  }
 }
+

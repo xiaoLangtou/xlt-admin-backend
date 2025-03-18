@@ -13,17 +13,10 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { PermissionGuard } from '@/common/guard/permission.guard';
 import { MenuModule } from '@/module/menu/menu.module';
 
-import {
-  utilities,
-  WINSTON_MODULE_NEST_PROVIDER,
-  WinstonLogger,
-  WinstonModule,
-  WinstonModuleAsyncOptions,
-} from 'nest-winston';
+import { WINSTON_MODULE_NEST_PROVIDER, WinstonLogger } from 'nest-winston';
 import { AuthModule } from '@/module/auth/auth.module';
 import { DictModule } from './module/dict/dict.module';
-import * as winston from 'winston';
-import CustomTypeOrmLogger from '@/common/CustomTypeOrmLogger';
+import CustomTypeormLogger from '@/common/typeorm-logger/custom-typeorm-logger';
 import 'winston-daily-rotate-file';
 import { RoleModule } from './module/role/role.module';
 import { DeptModule } from './module/dept/dept.module';
@@ -36,6 +29,8 @@ import { LoggerModule } from '@/module/monitor/logger/logger.module';
 import { InvokeRecordInterceptor } from '@/common/interceptor/invoke-record.interceptor';
 import { RedisCacheModule } from './module/monitor/redis-cache/redis-cache.module';
 import { SwaggerSyncModule } from './module/swagger-sync/swagger-sync.module';
+import { LoggingInterceptor } from '@/common/interceptor/logging.interceptor';
+import { CustomWinstonModule } from './common/winston/winston.module';
 
 @Module({
   imports: [
@@ -67,7 +62,7 @@ import { SwaggerSyncModule } from './module/swagger-sync/swagger-sync.module';
           database: configService.get('db.mysql.database'),
           synchronize: true,
           logging: configService.get('db.mysql.logging', true),
-          logger: new CustomTypeOrmLogger(logger),
+          logger: new CustomTypeormLogger(logger),
           entities: [`${__dirname}/**/*.entity{.ts,.js}`],
           autoLoadEntities: true,
           keepConnectionAlive: true,
@@ -80,38 +75,6 @@ import { SwaggerSyncModule } from './module/swagger-sync/swagger-sync.module';
       },
       inject: [ConfigService, WINSTON_MODULE_NEST_PROVIDER],
     } as TypeOrmModuleAsyncOptions),
-    WinstonModule.forRootAsync({
-      useFactory: (configService: ConfigService) => ({
-        level: 'debug',
-        levels: { ...winston.config.syslog.levels, sql: 8 },
-        transports: [
-          new winston.transports.DailyRotateFile({
-            ...configService.get('application.logger.info'),
-            format: winston.format.combine(
-              winston.format.timestamp(),
-              winston.format.printf((logs) => {
-                const { timestamp, level, message } = logs;
-                return `[${timestamp}] [${level}]: ${(message as string).replace(/\u001b\[[0-9;]*m/g, '')}\r\n`;
-              }),
-            ),
-          }),
-          new winston.transports.DailyRotateFile({
-            ...configService.get('application.logger.error'),
-            format: winston.format.combine(
-              winston.format.timestamp(),
-              winston.format.printf((logs) => {
-                const { timestamp, level, message, stack } = logs;
-                return `[${timestamp}] [${level}]: ${(message as string).replace(/\u001b\[[0-9;]*m/g, '')}\r\n[stack]: ${JSON.stringify(stack)}\r\n`;
-              }),
-            ),
-          }),
-          new winston.transports.Console({
-            format: winston.format.combine(winston.format.timestamp(), utilities.format.nestLike()),
-          }),
-        ],
-      }),
-      inject: [ConfigService],
-    } as WinstonModuleAsyncOptions),
     UserModule,
     RedisModule,
     EmailModule,
@@ -128,6 +91,7 @@ import { SwaggerSyncModule } from './module/swagger-sync/swagger-sync.module';
     LoggerModule,
     RedisCacheModule,
     SwaggerSyncModule,
+    CustomWinstonModule,
   ],
   controllers: [AppController],
   providers: [
@@ -143,6 +107,10 @@ import { SwaggerSyncModule } from './module/swagger-sync/swagger-sync.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: InvokeRecordInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
     },
   ],
 })

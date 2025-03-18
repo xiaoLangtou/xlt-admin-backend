@@ -239,7 +239,7 @@ export class UserService {
     const { current = 1, size = 10, roleId, ...otherParams } = query;
     const queryBuilder = this.userRepo
       .createQueryBuilder('user')
-      .innerJoinAndSelect('user_roles', 'ur', 'ur.user_id = user.id')
+      .innerJoinAndSelect('sys_user_roles', 'ur', 'ur.user_id = user.id')
       .where('ur.role_id = :roleId', { roleId })
       .andWhere('user.delFlag = :delFlag', { delFlag: '0' })
 
@@ -250,9 +250,44 @@ export class UserService {
         'user.email as email',
         'user.phone_number as phone ',
         'user.is_frozen as status',
+        'user.is_system_user as isSystemUser',
         CREATE_TIME_FORMAT('user'),
       ]);
 
+    this.applyFilters(queryBuilder, otherParams);
+    return this.executeQuery(queryBuilder, current, size);
+  }
+
+  async getUserNotListByRoleId(query: QueryUserWithRolesDto) {
+    const { current = 1, size = 10, roleId, ...otherParams } = query;
+    const queryBuilder = this.userRepo
+      .createQueryBuilder('user')
+      .where('user.del_flag = :del_flag', { del_flag: '0' })
+      .andWhere('user.delete_time IS NULL')
+      .andWhere(qb => {
+        const subQuery = qb
+          .subQuery()
+          .select('1')
+          .from('sys_user_roles', 'ur')
+          .where('ur.user_id = user.id')
+          .andWhere('ur.role_id = :roleId')
+          .getQuery();
+        return `NOT EXISTS (${subQuery})`;
+      })
+      .setParameter('roleId', roleId) // 传入当前角色 ID
+      .leftJoin('sys_dept', 'dept', 'dept.id = user.deptId')
+      .select([
+        'user.id AS id',
+        'user.username AS username',
+        'user.nickname AS nickname',
+        'user.email AS email',
+        'user.phone_number AS phone',
+        'user.is_frozen AS status',
+        'user.is_system_user AS isSystemUser',
+        'dept.dept_name AS deptName',
+        CREATE_TIME_FORMAT('user'),
+      ])
+      .orderBy('user.create_time', 'DESC');
     this.applyFilters(queryBuilder, otherParams);
     return this.executeQuery(queryBuilder, current, size);
   }
@@ -417,10 +452,10 @@ export class UserService {
   private createRoleEntities(roles: number[]): Role[] {
     return roles
       ? roles.map((id) => {
-          const role = new Role();
-          role.id = id;
-          return role;
-        })
+        const role = new Role();
+        role.id = id;
+        return role;
+      })
       : [];
   }
 
@@ -432,10 +467,10 @@ export class UserService {
   private createPostEntities(posts: number[]): Post[] {
     return posts
       ? posts.map((id) => {
-          const post = new Post();
-          post.id = id;
-          return post;
-        })
+        const post = new Post();
+        post.id = id;
+        return post;
+      })
       : [];
   }
 }
